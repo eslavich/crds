@@ -14,6 +14,7 @@ from crds.core import utils, exceptions
 
 # Table check expression helper functions
 
+
 def has_columns(array_info, col_names):
     """Return True IFF CRDS `array_info` object defines `col_names` columns in any order.
     
@@ -33,6 +34,7 @@ def has_columns(array_info, col_names):
         if col not in array_info.COLUMN_NAMES:
             return False
     return True
+
 
 def has_type(array_info, typestr):
     """Return True IFF CRDS `array_info` object has a data array of type `typestr`.
@@ -67,17 +69,15 @@ def has_type(array_info, typestr):
             return True
     return False
 
+
 def _image_type(typestr):
     """Return the translation of CRDS fuzzy type name `typestr` into numpy dtype str() prefixes.
     If CRDS has no definition for `typestr`,  return it unchanged.
     """
-    return {
-        'COMPLEX':'complex',
-        'INT' : 'int',
-        'INTEGER' : 'int',
-        'FLOAT' : 'float',
-        'BOOLEAN' : 'bool'
-    }.get(typestr, typestr)
+    return {"COMPLEX": "complex", "INT": "int", "INTEGER": "int", "FLOAT": "float", "BOOLEAN": "bool"}.get(
+        typestr, typestr
+    )
+
 
 def has_column_type(array_info, col_name, typestr):
     """Return True IFF column `col_name` of CRDS `array_info` object has a 
@@ -109,35 +109,37 @@ def has_column_type(array_info, col_name, typestr):
     except KeyError:
         pass
     raise exceptions.MissingColumnError("Data type not defined for column", repr(col_name))
-        
+
+
 def _table_type(typestr):
     """Return the translation of CRDS fuzzy type name `typestr` into numpy dtype str() prefixes.
     If CRDS has no definition for `typestr`,  return it unchanged.
     """
-    int_types = [">i","<i","uint","int"]
-    float_types = [">f","<f","float","float"]
-    complex_types = [">c","<c","complex","complex"]
+    int_types = [">i", "<i", "uint", "int"]
+    float_types = [">f", "<f", "float", "float"]
+    complex_types = [">c", "<c", "complex", "complex"]
     string_types = ["|S"]
-    
+
     def _array_types(types):
         return ["('" + typestr for typestr in types]
-    
+
     trans = {
-        'COMPLEX': complex_types,
-        'COMPLEX_ARRAY': _array_types(complex_types),
-        'INT' : int_types,
-        'INTEGER' : int_types,
-        'INT_ARRAY' : _array_types(int_types),
-        'INTEGER_ARRAY' : _array_types(int_types),
-        'FLOAT' : float_types,
-        'FLOAT_ARRAY' : _array_types(float_types),
-        'STR' : string_types,
-        'STRING' : string_types,
-        'STR_ARRAY' : _array_types(string_types),
-        'STRING_ARRAY' : _array_types(string_types),
+        "COMPLEX": complex_types,
+        "COMPLEX_ARRAY": _array_types(complex_types),
+        "INT": int_types,
+        "INTEGER": int_types,
+        "INT_ARRAY": _array_types(int_types),
+        "INTEGER_ARRAY": _array_types(int_types),
+        "FLOAT": float_types,
+        "FLOAT_ARRAY": _array_types(float_types),
+        "STR": string_types,
+        "STRING": string_types,
+        "STR_ARRAY": _array_types(string_types),
+        "STRING_ARRAY": _array_types(string_types),
     }.get(typestr, typestr)
 
     return trans
+
 
 def is_table(array_info):
     """Return True IFF CRDS `array_info` object corresponds to a table.
@@ -147,8 +149,9 @@ def is_table(array_info):
     >>> is_table(utils.Struct(KIND="TABLE"))
     True
     """
-    return array_exists(array_info) and array_info.KIND=="TABLE"
-    
+    return array_exists(array_info) and array_info.KIND == "TABLE"
+
+
 def is_image(array_info):
     """Return True IFF CRDS `array_info` object corresponds to an image.
     
@@ -157,9 +160,10 @@ def is_image(array_info):
     >>> is_image(utils.Struct(KIND="TABLE"))
     False
     """
-    return array_exists(array_info) and array_info.KIND=="IMAGE"
+    return array_exists(array_info) and array_info.KIND == "IMAGE"
 
-def  array_exists(array_info):
+
+def array_exists(array_info):
     """Return True IFF array_info is not UNDEFINED.
     
     >>> array_exists("UNDEFINED")
@@ -167,7 +171,8 @@ def  array_exists(array_info):
     >>> array_exists(utils.Struct({"KIND":"IMAGE", "SHAPE" : (2048,2048), "TYPE": "float32"}))
     True
     """
-    return array_info != "UNDEFINED" 
+    return array_info != "UNDEFINED"
+
 
 def is_imaging_mode(exp_type):
     """Return True IFF `exp_type` is one of the imaging modes for any instrument.
@@ -177,20 +182,47 @@ def is_imaging_mode(exp_type):
     >>> is_imaging_mode("NRS_IFU")
     False
     """
-    return exp_type in ["NRC_IMAGE", "NRC_TACQ", "NRC_TACONF", "NRC_CORON", "NRC_TSIMAGE",
-                        "NRC_FOCUS", "NRC_DARK", "NRC_FLAT", "NRC_LED",
-                        
-                        "MIR_IMAGE", "MIR_TACQ", "MIR_LYOT", "MIR_4QPM", "MIR_DARK",
-                        "MIR_FLATIMAGE", "MIR_CORONCAL", 
-                        
-                        "NRS_TASLIT", "NRS_TACQ", "NRS_TACONFIRM", 
-                        "NRS_CONFIRM", "NRS_IMAGE", "NRS_FOCUS", "NRS_DARK", "NRS_MIMF",
-                        
-                        "NIS_IMAGE", "NIS_TACQ", "NIS_TACONFIRM", "NIS_AMI", 
-                        "NIS_FOCUS", "NIS_DARK", "NIS_LAMP",
-                        
-                        "FGS_IMAGE", "FGS_FOCUS", "FGS_SKYFLAT", "FGS_INTFLAT", "FGS_DARK", "FGS_ID-STACK"]
-    
+    return exp_type in [
+        "NRC_IMAGE",
+        "NRC_TACQ",
+        "NRC_TACONF",
+        "NRC_CORON",
+        "NRC_TSIMAGE",
+        "NRC_FOCUS",
+        "NRC_DARK",
+        "NRC_FLAT",
+        "NRC_LED",
+        "MIR_IMAGE",
+        "MIR_TACQ",
+        "MIR_LYOT",
+        "MIR_4QPM",
+        "MIR_DARK",
+        "MIR_FLATIMAGE",
+        "MIR_CORONCAL",
+        "NRS_TASLIT",
+        "NRS_TACQ",
+        "NRS_TACONFIRM",
+        "NRS_CONFIRM",
+        "NRS_IMAGE",
+        "NRS_FOCUS",
+        "NRS_DARK",
+        "NRS_MIMF",
+        "NIS_IMAGE",
+        "NIS_TACQ",
+        "NIS_TACONFIRM",
+        "NIS_AMI",
+        "NIS_FOCUS",
+        "NIS_DARK",
+        "NIS_LAMP",
+        "FGS_IMAGE",
+        "FGS_FOCUS",
+        "FGS_SKYFLAT",
+        "FGS_INTFLAT",
+        "FGS_DARK",
+        "FGS_ID-STACK",
+    ]
+
+
 def is_full_frame(subarray):
     """Return True IFF `subarray` is defined and has a full frame subarray value.
     
@@ -211,7 +243,8 @@ def is_full_frame(subarray):
     >>> is_full_frame("BRIGHTSKY")
     False
     """
-    return subarray in ["FULL","GENERIC","N/A","ANY","*"]
+    return subarray in ["FULL", "GENERIC", "N/A", "ANY", "*"]
+
 
 def is_subarray(subarray):
     """Return True IFF `subarray` is defined and is not a full frame value.
@@ -233,7 +266,8 @@ def is_subarray(subarray):
     >>> is_subarray("BRIGHTSKY")
     True
     """
-    return  (subarray != "UNDEFINED") and not is_full_frame(subarray)
+    return (subarray != "UNDEFINED") and not is_full_frame(subarray)
+
 
 def subarray_defined(header):
     """Return True IFF SUBARRAY related keywords are defined.
@@ -246,11 +280,12 @@ def subarray_defined(header):
     >>> subarray_defined(header)
     False
     """
-    for keyword in ["SUBARRAY","SUBSTRT1","SUBSTRT2","SUBSIZE1","SUBSIZE2"]:
-        value = header.get(keyword,"UNDEFINED")
+    for keyword in ["SUBARRAY", "SUBSTRT1", "SUBSTRT2", "SUBSIZE1", "SUBSIZE2"]:
+        value = header.get(keyword, "UNDEFINED")
         if value == "UNDEFINED":
             return False
     return True
+
 
 def is_irs2(readpatt):
     """Return True IFF `readpatt` is one of the IRS2 READPATTs.
@@ -264,7 +299,8 @@ def is_irs2(readpatt):
     >>> is_irs2("ALLIRS2")
     True
     """
-    return 'IRS2' in readpatt
+    return "IRS2" in readpatt
+
 
 def is_defined(value):
     """Return True IFF `value` is not 'UNDEFINED' or None.
@@ -280,13 +316,14 @@ def is_defined(value):
     """
     return value not in ["UNDEFINED", None]
 
+
 # # @utils.traced
 # def nir_filter(instrument, reftype, exp_type):
 #     """Return True if a SCI, ERR, or DQ array is appropriate for the specified
-#     JWST NIR instrument, reftype, and exp_type.   This can be used to filter 
-#     out NIR SCI,ERR,DQ array definitions for those NIRSPEC modes and types 
+#     JWST NIR instrument, reftype, and exp_type.   This can be used to filter
+#     out NIR SCI,ERR,DQ array definitions for those NIRSPEC modes and types
 #     that don't define them.  The logic is too complex to inline.
-#     
+#
 #     >>> nir_filter("NIRSPEC", "SFLAT", "NRS_MSASPEC")
 #     True
 #     >>> nir_filter("NIRSPEC", "SFLAT", "NRS_IFU")
@@ -295,10 +332,10 @@ def is_defined(value):
 #     False
 #     >>> nir_filter("NIRSPEC", "SFLAT", "NRS_BRIGHTOBJ")
 #     False
-#     
+#
 #     >>> nir_filter("NIRSPEC", "DFLAT", "ANY")
 #     True
-#     
+#
 #     >>> nir_filter("NIRSPEC", "FFLAT", "NRS_MSASPEC")
 #     True
 #     >>> nir_filter("NIRSPEC", "FFLAT", "NRS_IFU")
@@ -307,7 +344,7 @@ def is_defined(value):
 #     False
 #     >>> nir_filter("NIRSPEC", "FFLAT", "NRS_BRIGTOBJ")
 #     False
-#     
+#
 #     """
 #     assert instrument != "MIRI",  "nir_filter() .tpn function should only be called for NIR-detector based instruments."
 #     if instrument == "NIRSPEC":
@@ -323,7 +360,7 @@ def is_defined(value):
 #             return True
 #     else:
 #         return True
-    
+
 # ----------------------------------------------------------------------------
 
 # These are presence field helpers that mutate a True value of a presence expression
@@ -334,8 +371,9 @@ def is_defined(value):
 # (OPTIONAL(True)) --> "O"
 # (OPTIONAL(False)) --> False,  constraint not evaluated.
 #
-# The enables having constraints which are conditionally optional,  so e.g. a constraint 
-# on 
+# The enables having constraints which are conditionally optional,  so e.g. a constraint
+# on
+
 
 def optional(flag=True):
     """When this flag is True, an exception should be issued if the related keyword/element is
@@ -349,6 +387,7 @@ def optional(flag=True):
     """
     return "O" if flag else False
 
+
 def required(flag=True):
     """When this flag is True,  an exception should be issued if the related keyword/element is
     not defined.     Returns "R" or False.
@@ -359,6 +398,7 @@ def required(flag=True):
     False
     """
     return "R" if flag else False
+
 
 def warning(flag=True):
     """Presence condition mutator/wrapper:
@@ -372,6 +412,7 @@ def warning(flag=True):
     False
     """
     return "W" if flag else False
+
 
 def warn_only(flag):
     """Expression constraint mutator/wrapper:
@@ -391,6 +432,7 @@ def warn_only(flag):
     """
     return "W" if not flag else True
 
+
 def subarray(flag=True):
     """When this flag is True,  the related constraint should be applied if
     is_full_frame(SUBARRAY) is False.     Returns "S" or False.
@@ -401,6 +443,7 @@ def subarray(flag=True):
     False
     """
     return "S" if flag else False
+
 
 def full_frame(flag=True):
     """When this flag is True,  the related constraint should be applied if
@@ -413,6 +456,7 @@ def full_frame(flag=True):
     """
     return "F" if flag else False
 
+
 def all_subarray(flag=True):
     """When `flag` is True,  mark this constraint as applying to all SUBARRAY forms,
     including full frame, as long as SUBARRAY is defined.   Returns "A" or False.
@@ -423,8 +467,10 @@ def all_subarray(flag=True):
     False
     """
     return "A" if flag else False
-                 
+
+
 # ----------------------------------------------------------------------------
+
 
 def ndim(array, dims):
     """Return True IFF CRDS `array` object has number of dimensions `dims`.
@@ -440,14 +486,16 @@ def ndim(array, dims):
     """
     return len(array.SHAPE) == dims
 
+
 # ----------------------------------------------------------------------------
+
 
 def test():
     import doctest
     from crds.certify import validator_helpers
+
     return doctest.testmod(validator_helpers)
+
 
 if __name__ == "__main__":
     print(test())
-
-

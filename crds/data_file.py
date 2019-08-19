@@ -1,7 +1,7 @@
 """This module defines limited facilities for extracting information from 
 reference and datasets,  generally in the form of header dictionaries.
 """
-from crds.core  import utils, log
+from crds.core import utils, log
 
 # =============================================================================
 
@@ -14,6 +14,7 @@ from crds.io.fits import fits_open, fits_open_trapped, get_fits_header_union
 # import yaml
 
 # =============================================================================
+
 
 def get_conditioned_header(filepath, needed_keys=(), original_name=None, observatory=None):
     """Return the complete conditioned header dictionary of a reference file,
@@ -28,6 +29,7 @@ def get_conditioned_header(filepath, needed_keys=(), original_name=None, observa
     header = get_header(filepath, needed_keys, original_name, observatory=observatory)
     return utils.condition_header(header, needed_keys)
 
+
 @hijack_warnings
 def get_header(filepath, needed_keys=(), original_name=None, observatory=None):
     """Return the complete unconditioned header dictionary of a reference file.
@@ -41,8 +43,10 @@ def get_header(filepath, needed_keys=(), original_name=None, observatory=None):
     """
     return get_free_header(filepath, needed_keys, original_name, observatory)
 
+
 # A clearer name
 get_unconditioned_header = get_header
+
 
 @utils.cached
 # @utils.gc_collected
@@ -67,11 +71,13 @@ def get_free_header(filepath, needed_keys=(), original_name=None, observatory=No
     log.verbose("Header of", repr(filepath), "=", log.PP(header), verbosity=90)
     return header
 
+
 def clear_header_cache():
     """Flush the header cache,  nominally to recover storage taken by array attributes
     brought in for certify.
     """
     get_free_header.cache.clear()
+
 
 # ================================================================================================================
 
@@ -85,6 +91,7 @@ def getval(filepath, key, condition=True):
     value = utils.condition_value(value) if condition else value
     return value
 
+
 @hijack_warnings
 @utils.gc_collected
 def setval(filepath, key, value):
@@ -93,23 +100,28 @@ def setval(filepath, key, value):
         key = key.replace("META_", "META.")
     file_obj = file_factory(filepath)
     file_obj.setval(key, value)
-    
+
+
 def add_checksum(filepath):
     """Add checksums to `filepath`."""
     file_obj = file_factory(filepath)
     return file_obj.add_checksum()
+
 
 def remove_checksum(filepath):
     """Remove checksums to `filepath`."""
     file_obj = file_factory(filepath)
     return file_obj.remove_checksum()
 
+
 def verify_checksum(filepath):
     """Verify checksums in `filepath`."""
     file_obj = file_factory(filepath)
     return file_obj.verify_checksum()
 
+
 # ================================================================================================================
+
 
 def get_array_properties(filename, array_name, keytype="A"):
     """Return the dictionary defining basic properties of `array_name` of `filename`.
@@ -121,13 +133,17 @@ def get_array_properties(filename, array_name, keytype="A"):
     props = file_obj.get_array_properties(array_name, keytype)
     return props
 
+
 # ================================================================================================================
+
 
 def test():
     """Run doctest on data_file module."""
     import doctest
     from crds import data_file
+
     return doctest.testmod(data_file)
+
 
 if __name__ == "__main__":
     print(test())

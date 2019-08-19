@@ -29,7 +29,7 @@ import os.path
 
 from crds.certify import reftypes
 
-HERE  = os.path.abspath(os.path.dirname(__file__) or ".")
+HERE = os.path.abspath(os.path.dirname(__file__) or ".")
 
 TYPES = reftypes.from_package_file("hst", __file__)
 
@@ -39,23 +39,20 @@ EXTENSIONS = TYPES.extensions
 TEXT_DESCR = TYPES.text_descr
 FILEKINDS = TYPES.filekinds
 
-INSTRUMENT_FIXERS = {
-    "hst" : "synphot",
-    "wfii": "wfpc2",
-}
+INSTRUMENT_FIXERS = {"hst": "synphot", "wfii": "wfpc2"}
 
-TYPE_FIXERS = {
-    ("wfpc2","dark") : "drk", 
-}
+TYPE_FIXERS = {("wfpc2", "dark"): "drk"}
 
-PROVENANCE_KEYWORDS = ("DESCRIP", "COMMENT", "PEDIGREE", "USEAFTER","HISTORY",)
+PROVENANCE_KEYWORDS = ("DESCRIP", "COMMENT", "PEDIGREE", "USEAFTER", "HISTORY")
 
 USEAFTER_KEYWORDS = ("DATE-OBS", "TIME-OBS")  # Dataset keywords matching in UseAfter selectors
 
-DEFAULT_SELECTORS = ("Match", "UseAfter")   # Normal selector hierarchy in rmap
+DEFAULT_SELECTORS = ("Match", "UseAfter")  # Normal selector hierarchy in rmap
+
 
 def test():
     """Run hst package doctests."""
     from crds import hst
     import doctest
+
     return doctest.testmod(hst)

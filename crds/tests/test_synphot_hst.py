@@ -12,6 +12,7 @@ from crds.tests import test_config
 
 # ==============================================================
 
+
 def dt_synphot_naming():
     """
     >>> old_state = test_config.setup()
@@ -115,6 +116,7 @@ def dt_synphot_naming():
 
     >>> test_config.cleanup(old_state)
     """
+
 
 def dt_synphot_certify_refs():
     """
@@ -390,6 +392,7 @@ def dt_synphot_certify_refs():
     >>> test_config.cleanup(old_state)
     """
 
+
 def dt_synphot_certify_rmaps():
     """
     >>> old_state = test_config.setup()
@@ -455,6 +458,7 @@ def dt_synphot_certify_rmaps():
 
     >>> test_config.cleanup(old_state)
     """
+
 
 def dt_synphot_refactor():
     """
@@ -554,6 +558,7 @@ def dt_synphot_refactor():
     >>> test_config.cleanup(old_state)
     """
 
+
 def dt_synphot_bestrefs():
     """
     >>> old_state = test_config.setup()
@@ -636,7 +641,9 @@ def dt_synphot_diff():
     >>> test_config.cleanup(old_state)
     """
 
+
 # ==============================================================
+
 
 def main():
     """Run module tests,  for now just doctests only.
@@ -647,7 +654,9 @@ def main():
     things go wrong.
     """
     from crds.tests import test_synphot_hst, tstmod
+
     return tstmod(test_synphot_hst)
+
 
 # ==============================================================
 

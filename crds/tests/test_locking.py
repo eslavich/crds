@@ -19,6 +19,7 @@ from . import test_config
 
 # ===================================================================
 
+
 def multiprocessing_instance(output_file_name):
     """Pretend to do something generic."""
     output_file = open(output_file_name, "a")
@@ -29,16 +30,17 @@ def multiprocessing_instance(output_file_name):
             time.sleep(0.2)
         output_file.write("\n")
         output_file.flush()
-            
+
 
 def try_multiprocessing():
     """Run some test functions using multiprocessing."""
     pool = multiprocessing.Pool(5)
     with tempfile.NamedTemporaryFile(mode="a") as output_file:
-        pool.map(multiprocessing_instance, [output_file.name]*5)
+        pool.map(multiprocessing_instance, [output_file.name] * 5)
         pool.close()
         reader = open(output_file.name)
         print(reader.read())
+
 
 def dt_default_locking():
     """
@@ -59,6 +61,7 @@ def dt_default_locking():
     >>> test_config.cleanup(old_state)
     """
 
+
 def dt_multiprocessing_locking():
     """
     Default locking configuration, enabled.
@@ -78,6 +81,7 @@ def dt_multiprocessing_locking():
     <BLANKLINE>
     >>> test_config.cleanup(old_state)
     """
+
 
 def dt_filelock_locking():
     """
@@ -100,6 +104,7 @@ def dt_filelock_locking():
     <BLANKLINE>
     >>> test_config.cleanup(old_state)
     """
+
 
 def dt_lockfile_locking():
     """
@@ -125,6 +130,7 @@ def dt_lockfile_locking():
     >>> test_config.cleanup(old_state)
     """
 
+
 def dt_default_disabled():
     """
     Default locking configuration, enabled.
@@ -146,6 +152,7 @@ def dt_default_disabled():
     >>> test_config.cleanup(old_state)
     """
 
+
 def dt_default_readonly():
     """
     Default locking configuration, enabled.
@@ -166,13 +173,16 @@ def dt_default_readonly():
     >>> test_config.cleanup(old_state)
     """
 
+
 # ==================================================================================
+
 
 def main():
     """Run module tests,  for now just doctests only."""
     from crds.tests import test_locking, tstmod
+
     return tstmod(test_locking)
+
 
 if __name__ == "__main__":
     print(main())
-

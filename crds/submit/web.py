@@ -10,6 +10,7 @@ from . import background
 # from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 try:
     import requests
+
     DISABLED = []
 except (ImportError, RuntimeError):
     log.verbose_warning("Import of 'requests' failed.  submit disabled.")
@@ -22,13 +23,15 @@ except (ImportError, RuntimeError):
 
 # ==================================================================================================
 
-def log_section(section_name, section_value, verbosity=50, log_function=log.verbose, 
-                divider_name=None):
+
+def log_section(section_name, section_value, verbosity=50, log_function=log.verbose, divider_name=None):
     """Issue log divider bar followed by a corresponding log message."""
     log.divider(name=divider_name, verbosity=verbosity, func=log.verbose)
-    log_function(section_name, section_value, verbosity=verbosity+5)
+    log_function(section_name, section_value, verbosity=verbosity + 5)
+
 
 # ==================================================================================================
+
 
 class CrdsDjangoConnection:
 
@@ -45,7 +48,7 @@ class CrdsDjangoConnection:
         self.password = password
         self.base_url = base_url
         self.session = requests.session()
-        self.session.headers.update({'referer': self.base_url})
+        self.session.headers.update({"referer": self.base_url})
 
     def abs_url(self, relative_url):
         """Return the absolute server URL constructed from the given `relative_url`."""
@@ -69,14 +72,14 @@ class CrdsDjangoConnection:
         self.dump_response("Response: ", response)
         self.check_error(response)
         return response
-    
+
     post_complete = get_complete = repost_complete = response_complete
 
     def get(self, relative_url):
         """HTTP(S) GET `relative_url` and return the requests response object."""
         args = self.get_start(relative_url)
         return self.get_complete(args)
-    
+
     @background.background
     def get_start(self, relative_url):
         """Initiate a GET running in the background, do debug logging."""
@@ -96,7 +99,7 @@ class CrdsDjangoConnection:
         vars = utils.combine_dicts(*post_dicts, **post_vars)
         log_section("POST:", vars, divider_name="POST: " + url)
         return self.session.post(url, data=vars)
-    
+
     def repost(self, relative_url, *post_dicts, **post_vars):
         """First GET form from ``relative_url`,  next POST form to same
         url using composition of variables from *post_dicts and **post_vars.
@@ -112,37 +115,42 @@ class CrdsDjangoConnection:
         the resulting thread and queue.
         """
         response = self.get(relative_url)
-        csrf_values= html.fromstring(response.text).xpath(
-            '//input[@name="csrfmiddlewaretoken"]/@value'
-            )
+        csrf_values = html.fromstring(response.text).xpath('//input[@name="csrfmiddlewaretoken"]/@value')
         if csrf_values:
-            post_vars['csrfmiddlewaretoken'] = csrf_values[0]
+            post_vars["csrfmiddlewaretoken"] = csrf_values[0]
         return self.post_start(relative_url, *post_dicts, **post_vars)
 
     """
     {'time_remaining': '3:57:58', 'user': 'jmiller_unpriv', 'created_on': '2017-02-23 16:12:55', 'type': 'instrument', 'is_expired': False, 'status': 'ok', 'name': 'miri'}
     """
+
     def fail_if_existing_lock(self):
         """Issue a warning if self.locked_instrument is already locked."""
-        response = self.get("/lock_status/"+self.username+"/")
+        response = self.get("/lock_status/" + self.username + "/")
         log.verbose("lock_status:", response)
         json_dict = utils.Struct(response.json())
-        if (json_dict.name and (not json_dict.is_expired) and (json_dict.type == "instrument") and (json_dict.user == self.username)):
-            CrdsWebError("User", repr(self.username), "has already locked", repr(json_dict.name),
-                         ".  Failing to avert collisions.  User --logout or logout on the website to bypass.")
+        if (
+            json_dict.name
+            and (not json_dict.is_expired)
+            and (json_dict.type == "instrument")
+            and (json_dict.user == self.username)
+        ):
+            CrdsWebError(
+                "User",
+                repr(self.username),
+                "has already locked",
+                repr(json_dict.name),
+                ".  Failing to avert collisions.  User --logout or logout on the website to bypass.",
+            )
 
     def login(self, next="/"):
         """Login to the CRDS website and proceed to relative url `next`."""
         self.session.cookies["ASB-AUTH"] = self.password
         response = self.repost(
-            "/login/", 
-            username = self.username,
-            password = self.password, 
-            instrument = self.locked_instrument,
-            next = next,
-            )
+            "/login/", username=self.username, password=self.password, instrument=self.locked_instrument, next=next
+        )
         self.check_login(response)
-        
+
     def check_error(self, response):
         """Note an error + exception if response contains an error_message <div>."""
         self._check_error(response, '//div[@id="error_message"]', "CRDS server error:")
@@ -150,15 +158,9 @@ class CrdsDjangoConnection:
 
     def check_login(self, response):
         """Note an error + exception if response contains content indicating login error."""
-        self._check_error(
-            response, '//div[@id="error_login"]',
-            "Error logging into CRDS server:")
-        self._check_error(
-            response, '//div[@id="error_message"]',
-            "Error logging into CRDS server:")
-        self._check_error(
-            response, '//title[contains(text(), "MyST SSO Portal")]',
-            "Error logging into CRDS server:")
+        self._check_error(response, '//div[@id="error_login"]', "Error logging into CRDS server:")
+        self._check_error(response, '//div[@id="error_message"]', "Error logging into CRDS server:")
+        self._check_error(response, '//title[contains(text(), "MyST SSO Portal")]', "Error logging into CRDS server:")
 
     def _check_error(self, response, xpath_spec, error_prefix):
         """Extract the `xpath_spec` text from `response`,  if present issue a
@@ -174,7 +176,7 @@ class CrdsDjangoConnection:
         if response.ok:
             error_msg_parse = html.fromstring(response.text).xpath(xpath_spec)
             for parse in error_msg_parse:
-                error_message = parse.text.strip().replace("\n","")
+                error_message = parse.text.strip().replace("\n", "")
                 if error_message:
                     if error_message.startswith("ERROR: "):
                         error_message = error_message[len("ERROR: ")]
@@ -195,7 +197,7 @@ class CrdsDjangoConnection:
         abs_url = self.abs_url(relative_url)
         response = self.session.get(abs_url)
         log.verbose("COOKIES:", log.PP(response.cookies))
-        csrf_token = response.cookies['csrftoken']
-        files = { "files" : open(filepath, "rb") }        
-        data = {'csrfmiddlewaretoken': csrf_token}
+        csrf_token = response.cookies["csrftoken"]
+        files = {"files": open(filepath, "rb")}
+        data = {"csrfmiddlewaretoken": csrf_token}
         self.session.post(abs_url, files=files, data=data)

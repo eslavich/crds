@@ -19,6 +19,7 @@ _STATUS_COMPLETED = 0
 _STATUS_FAILED = 1
 _STATUS_CANCELLED = 3
 
+
 class MonitorScript(cmdline.Script):
     """Command line script to dump real time submission progress messages."""
 
@@ -35,16 +36,16 @@ polls the server for new messages at some periodic rate in seconds:
     def __init__(self, *args, **keys):
         super(MonitorScript, self).__init__(*args, **keys)
         self._last_id = 0
-        
+
         self.result = None
 
     def add_args(self):
         """Add class-specifc command line parameters."""
         super(MonitorScript, self).add_args()
-        self.add_argument("--key", type=cmdline.process_key,
-                          help="Key used to connect to remote process status stream.")
-        self.add_argument("--poll-delay", type=int, default=3.0,
-                          help="Time in seconds between polling for messages.")
+        self.add_argument(
+            "--key", type=cmdline.process_key, help="Key used to connect to remote process status stream."
+        )
+        self.add_argument("--poll-delay", type=int, default=3.0, help="Time in seconds between polling for messages.")
 
     def main(self):
         """Main control flow of submission directory and request manifest creation."""
@@ -66,8 +67,7 @@ polls the server for new messages at some periodic rate in seconds:
                 self._last_id = np.max([int(msg.id) for msg in messages])
             return messages
         except exceptions.StatusChannelNotFoundError:
-            log.verbose("Channel", srepr(self.args.key), 
-                        "not found.  Waiting for processing to start.")
+            log.verbose("Channel", srepr(self.args.key), "not found.  Waiting for processing to start.")
             return []
         except exceptions.ServiceError as exc:
             log.verbose("Unhandled RPC exception for", srepr(self.args.key), "is", str(exc))
@@ -87,7 +87,7 @@ polls the server for new messages at some periodic rate in seconds:
         log.info(self.format_remote(message.data))
         return None
 
-    def handle_unknown(self,  message):
+    def handle_unknown(self, message):
         """Handle unknown `message` types by issuing a warning and continuing monitoring."""
         log.warning(self.format_remote("Unknown message type", repr(message.type), "in", repr(message)))
         return None
@@ -107,7 +107,7 @@ polls the server for new messages at some periodic rate in seconds:
             log.info(self.format_remote("DONE:", result))
 
         self.result = result
-        
+
         return status
 
     def handle_cancel(self, message):
@@ -124,19 +124,19 @@ polls the server for new messages at some periodic rate in seconds:
         """Generic "fail" handler reports on remote process fatal error / failure
         and issues an error() message, then stops monitoring /exits.
         """
-        log.error(self.format_remote("Processing failed:",  message.data))
+        log.error(self.format_remote("Processing failed:", message.data))
 
         self.result = message.data["result"]
-        
+
         return _STATUS_FAILED
-    
+
     def handle_error(self, message):
         """Generic "error" handler issues an error message from remote process and
         continues monitoring.
         """
         log.error(self.format_remote(message.data))
         return None
-    
+
     def handle_verbose(self, message):
         """Generic "verbose" handler issues a debug message from remote process if
         this monitor is running verbosely.
@@ -151,8 +151,8 @@ polls the server for new messages at some periodic rate in seconds:
         log.warning(self.format_remote(message.data))
         return None
 
+
 # ===================================================================
 
 if __name__ == "__main__":
     sys.exit(MonitorScript()())
-

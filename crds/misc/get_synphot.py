@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-#-*-python-*-
+# -*-python-*-
 
 """This script is used to "check out" a version of synphot files corresponding
 to a CRDS context with an organization compatible with the classic (Py)Synphot
@@ -18,11 +18,7 @@ import warnings
 
 # from pysynphot import locations
 
-SYNPHOT_IGNORE = [
-    "Extinction files not found",
-    "No graph or component tables found",
-    "No thermal tables found"
-    ]
+SYNPHOT_IGNORE = ["Extinction files not found", "No graph or component tables found", "No thermal tables found"]
 
 # =============================================================================
 
@@ -34,6 +30,7 @@ from crds.io import tables
 
 # =============================================================================
 
+
 class GetSynphotScript(cmdline.Script):
     """Command line script for modifying .rmap files."""
 
@@ -41,7 +38,7 @@ class GetSynphotScript(cmdline.Script):
 This script downloads (Py)Synphot files refered to by <context> 
 from the CRDS server to directory <synphot_dir>.
     """
-    
+
     epilog = """
 get_synphot works by first creating a CRDS cache under the specified
 <synphot_dir> and then hard linking files from that CRDS cache to their
@@ -82,24 +79,30 @@ Example get_synophot runs:
 
   This retains the existing synphot comp and mtab directories my_pysyn_dir.
 """
+
     def __init__(self, *args, **keys):
         super(GetSynphotScript, self).__init__(*args, **keys)
         self.pmap = None
         self.imap = None
-        
+
     def add_args(self):
         """Add command line parameters specific to this script."""
+        self.add_argument("synphot_dir", type=str, help="Location of synphot directory.")
         self.add_argument(
-            "synphot_dir", type=str, help="Location of synphot directory.")
+            "context",
+            type=cmdline.context_spec,
+            help="CRDS context (.pmap) defining version of synphot references to fetch.",
+        )
         self.add_argument(
-            'context', type=cmdline.context_spec,
-            help="CRDS context (.pmap) defining version of synphot references to fetch.")
+            "--keep-crds",
+            action="store_true",
+            help="Don't remove the 'crds' cache subdirectory of <synphot_dir> after downloading.",
+        )
         self.add_argument(
-            "--keep-crds", action="store_true",
-            help="Don't remove the 'crds' cache subdirectory of <synphot_dir> after downloading.")
-        self.add_argument(
-            "--keep-synphot", action="store_true",
-            help="Don't remove <synphot_dir> subdirectories before linking requested files.")
+            "--keep-synphot",
+            action="store_true",
+            help="Don't remove <synphot_dir> subdirectories before linking requested files.",
+        )
 
     def determine_contexts(self):
         """Use the command line `context` parameter to help define things like
@@ -108,7 +111,7 @@ Example get_synophot runs:
         return [self.args.context]
 
     # -------------------------------------------------------------------------
-    
+
     def main(self):
         """Perform the high level sequence of tasks needed to download and
         organize a version of pysynphot files under the specified directory.
@@ -120,32 +123,31 @@ Example get_synophot runs:
             self.rmdir("crds")
 
         self.crds_download()
-            
+
         syn_name_map = self.pysyn_cdbs_from_syn_tables()
 
         # Blow away comp and mtab to remove old versions of links
         if not self.args.keep_synphot:
             self.rmdir("comp")
             self.rmdir("mtab")
-            
+
         self.cross_link_cdbs_paths(syn_name_map)
 
         # Blow away CRDS cache leaving only synphot organization.
         # in the final product.
         if not self.args.keep_crds:
             self.rmdir("crds")
-            
-        log.standard_status()    
+
+        log.standard_status()
         return log.errors()
 
     # -------------------------------------------------------------------------
-    
+
     def deferred_init(self):
         """Initialize CRDS and PySYNPHOT after module import and basic script
         object construction.
         """
-        self.crds_cache = os.path.abspath(os.path.join(
-            self.args.synphot_dir, "crds"))
+        self.crds_cache = os.path.abspath(os.path.join(self.args.synphot_dir, "crds"))
         config.override_crds_paths(self.crds_cache)
         os.environ["PYSYN_CDBS"] = self.args.synphot_dir
         utils.clear_function_caches()
@@ -157,13 +159,13 @@ Example get_synophot runs:
         and can optimize future downloads if desired.
         """
         resolved_context = self.resolve_context(self.args.context)
-        self.dump_mappings([resolved_context])        
+        self.dump_mappings([resolved_context])
         self.pmap = crds.get_cached_mapping(resolved_context)
         self.imap = self.pmap.get_imap("synphot")
-        self.dump_files(resolved_context, self.imap.reference_names())        
-    
+        self.dump_files(resolved_context, self.imap.reference_names())
+
     # -------------------------------------------------------------------------
-    
+
     def pysyn_cdbs_from_syn_tables(self):
         """Construct the mapping from synphot file basename to classic CDBS path for
         every file defined by the TMC and TMT tables.  Also include mtab paths
@@ -198,24 +200,22 @@ Example get_synophot runs:
         Returns  { component_basename : abs_pysyn_path, ...}
         """
         for msg in SYNPHOT_IGNORE:
-            warnings.filterwarnings("ignore",msg)
+            warnings.filterwarnings("ignore", msg)
         from pysynphot import locations
-        
+
         filekind = synname + "tab"
-        rmap  = self.imap.get_rmap(filekind)
-        
-        references  = rmap.reference_names()
-        assert len(references) == 1, \
-            "More than one '%s' reference name mentioned in '%s'." % \
-            (synname, rmap.name)
+        rmap = self.imap.get_rmap(filekind)
+
+        references = rmap.reference_names()
+        assert len(references) == 1, "More than one '%s' reference name mentioned in '%s'." % (synname, rmap.name)
         tab_name = references[0]
-        
+
         # rmap object locate() not module function.
         tab_path = rmap.locate_file(tab_name)
 
         # CRDS abstract table object nominally from HDU 1
         table = tables.tables(tab_path)[0]
-        
+
         fileinfo = {}
         for syn_name in table.columns["FILENAME"]:
 
@@ -223,13 +223,12 @@ Example get_synophot runs:
             name = basename.split("[")[0]  # remove parameterization
 
             dollar_syn_name = syn_name.split("[")[0]
-            
+
             # Use pysynphot to interpret iraf_path
-            cdbs_filepath = os.path.abspath(
-                locations.irafconvert(dollar_syn_name))
+            cdbs_filepath = os.path.abspath(locations.irafconvert(dollar_syn_name))
 
             fileinfo[name] = cdbs_filepath
-            
+
         return fileinfo
 
     def get_mtab_info(self, tab):
@@ -245,12 +244,11 @@ Example get_synophot runs:
         references = rmap.reference_names()
         assert len(references) == 1, "More than one " + repr(tab.upper()) + " file."
         filename = references[0]
-        fullpath = os.path.abspath(os.path.join(
-            self.args.synphot_dir, "mtab", filename))
-        return { filename : fullpath }
+        fullpath = os.path.abspath(os.path.join(self.args.synphot_dir, "mtab", filename))
+        return {filename: fullpath}
 
     # -------------------------------------------------------------------------
-    
+
     def cross_link_cdbs_paths(self, syn_name_map):
         """Hard link files from the downloaded CRDS cache structure to the
         classic CDBS-style directory locations specified by `syn_name_map`.
@@ -264,8 +262,7 @@ Example get_synophot runs:
         returns   None
         """
         for reference in syn_name_map:
-            with log.error_on_exception(
-                    "Failed linking", repr(reference), "to CDBS directory."):
+            with log.error_on_exception("Failed linking", repr(reference), "to CDBS directory."):
                 crds_filepath = os.path.abspath(self.imap.locate_file(reference))
                 cdbs_filepath = syn_name_map[reference]
                 utils.ensure_dir_exists(cdbs_filepath)
@@ -283,9 +280,10 @@ Example get_synophot runs:
         path = os.path.join(self.args.synphot_dir, subdir)
         log.verbose("rmdir: ", repr(path))
         with log.verbose_warning_on_exception("Failed removing", repr(path)):
-            shutil.rmtree(path)        
+            shutil.rmtree(path)
+
 
 # -----------------------------------------------------------------------------
-    
+
 if __name__ == "__main__":
     sys.exit(GetSynphotScript()())

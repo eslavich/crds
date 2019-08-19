@@ -25,13 +25,15 @@ which will interpret the rules to expand appropriate values in header.
 import os.path
 
 from . import log, utils, selectors
+
 # from . import heavy_client (circular for rmap)
 
 # ============================================================================
 
 HERE = os.path.dirname(__file__) or "."
-    
-# ============================================================================    
+
+# ============================================================================
+
 
 class HeaderExpander:
     """HeaderExpander applies a set of expansion rules to a header.  It 
@@ -57,11 +59,15 @@ class HeaderExpander:
     >>> pp(expander.expand(header))
     {'DETECTOR': 'HRC', 'FILTER1': 'G800L', 'OBSTYPE': 'IMAGING|CORONAGRAPHIC'}
     """
+
     def __init__(self, expansion_mapping, expansion_file="(none)"):
         self.mapping = {}
         for var, substitutes in expansion_mapping.items():
             for expr, replacement in substitutes.items():
-                self.mapping[(var, expr)] = (replacement, compile(expr, expansion_file, "eval"))  # compiled code is from static file.
+                self.mapping[(var, expr)] = (
+                    replacement,
+                    compile(expr, expansion_file, "eval"),
+                )  # compiled code is from static file.
         self._required_keys = self.required_keys()
 
     def expand(self, header, required_parkeys=None):
@@ -75,57 +81,54 @@ class HeaderExpander:
         log.verbose("Unexpanded header", self.required_header(header))
         for (var, expr), (expansion, compiled) in self.mapping.items():
             if var not in required_parkeys:
-                log.verbose("Skipping expansion for unused parkey", repr(var),
-                            "of", repr(expansion))
+                log.verbose("Skipping expansion for unused parkey", repr(var), "of", repr(expansion))
                 continue
             try:
                 applicable = eval(compiled, {}, header)  # compiled code is from static file.
             except Exception as exc:
-                log.verbose_warning("Header expansion for",repr(expr), 
-                            "failed for", repr(str(exc)))
+                log.verbose_warning("Header expansion for", repr(expr), "failed for", repr(str(exc)))
                 continue
             if applicable:
-                log.verbose("Expanding", repr(expr), "yields", 
-                            var + "=" + repr(expansion))
+                log.verbose("Expanding", repr(expr), "yields", var + "=" + repr(expansion))
                 expanded[var] = expansion
             else:
                 log.verbose("Expanding", repr(expr), "doesn't apply.")
         log.verbose("Expanded header", self.required_header(expanded))
         return expanded
-    
+
     def required_keys(self):
         """Return the list of header keys required to evaluate all substitutions conditions."""
         required = []
         for (_var, expr) in self.mapping:
             required.extend(required_keys(expr))
         return sorted(set(required))
-    
+
     def required_header(self, header):
         """Ensure all required keywords for evaluating expansions are defined in `header`, at lest
         with a value of UNDEFINED.
         """
-        return sorted({ key: header.get(key, "UNDEFINED") for key in self._required_keys }.items())
+        return sorted({key: header.get(key, "UNDEFINED") for key in self._required_keys}.items())
 
     def get_expansion_values(self):
         values = {}
         for (var, expr), (expansion, compiled) in self.mapping.items():
             if var not in values:
                 values[var] = set()
-            values[var] |= set([value for value in selectors.glob_list(expansion) 
-                                if not value.startswith("BETWEEN")])
-        return { var : sorted(list(vals)) for (var, vals) in values.items() }
-        
+            values[var] |= set([value for value in selectors.glob_list(expansion) if not value.startswith("BETWEEN")])
+        return {var: sorted(list(vals)) for (var, vals) in values.items()}
+
+
 def required_keys(expr):
     """
     >>> required_keys("VAR1=='VAL1' and VAR2=='VAL2' and VAR3=='VAL3'")
     ['VAR1', 'VAR2', 'VAR3']
     """
     return sorted({term.split("=")[0].strip() for term in expr.split("and")})
-    
+
 
 class ReferenceHeaderExpanders(dict):
     """Container class for all expanders for all instruments of an observatory."""
-    
+
     @classmethod
     @utils.cached
     def load(cls, observatory):
@@ -156,12 +159,28 @@ class ReferenceHeaderExpanders(dict):
             for parameter, values in sorted(self[instrument].get_expansion_values().items()):
                 for value in sorted(values):
                     if parameter not in valid_values or not valid_values[parameter]:
-                        log.verbose("For", repr(instrument), "parameter", repr(parameter),
-                                    "with value", repr(value), "is unchecked.")
+                        log.verbose(
+                            "For",
+                            repr(instrument),
+                            "parameter",
+                            repr(parameter),
+                            "with value",
+                            repr(value),
+                            "is unchecked.",
+                        )
                         continue
                     if value not in valid_values[parameter]:
-                        log.error("For", repr(instrument), "parameter", repr(parameter), "value", 
-                                  repr(value), "is not in", valid_values[parameter])
+                        log.error(
+                            "For",
+                            repr(instrument),
+                            "parameter",
+                            repr(parameter),
+                            "value",
+                            repr(value),
+                            "is not in",
+                            valid_values[parameter],
+                        )
+
 
 def expand_wildcards(rmapping, header):
     """Expand substitution values in `header` with respect to the instrument and observatory
@@ -174,6 +193,7 @@ def expand_wildcards(rmapping, header):
 def validate_substitutions(pmap_name):
     """This is a unit test function."""
     from . import heavy_client
+
     pmap = heavy_client.get_symbolic_mapping(pmap_name)
     expanders = ReferenceHeaderExpanders.load(pmap.observatory)
     expanders.validate_expansions(pmap)

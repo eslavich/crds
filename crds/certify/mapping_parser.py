@@ -95,13 +95,14 @@ def profile_parse(filename="hst_cos_deadtab.rmap"):
     stats.sort_stats("time")
     stats.print_stats(20)
 '''
-    
+
 Parsing = namedtuple("Parsing", "header,selector,comment")
-    
+
+
 def parse_mapping(filename):
     """Parse mapping `filename`.   Return parsing."""
     global parsley, MAPPING_PARSER
-    
+
     if parsley is None:
         raise NotImplementedError("Parsley parsing package must be installed.")
 
@@ -116,6 +117,7 @@ def parse_mapping(filename):
             header, selector, comment = parser.mapping()
             return Parsing(header, selector, comment)
 
+
 def check_duplicates(parsing):
     """Examine mapping `parsing` from parse_mapping() for duplicate header or selector entries."""
     if isinstance(parsing.selector, selectors.Parameters):
@@ -123,4 +125,3 @@ def check_duplicates(parsing):
     else:
         selectors.check_duplicates(parsing.header, ["header"])
         selectors.check_duplicates(parsing.selector, ["selector"])
-

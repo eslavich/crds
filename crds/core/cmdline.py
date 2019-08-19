@@ -26,52 +26,61 @@ from crds.client import api
 
 # =============================================================================
 
+
 def _show_version():
     """Dump CRDS version information and exit python."""
     print(heavy_client.version_info())
     sys.exit(-1)
 
+
 # =============================================================================
 
 # command line parameter type coercion / verification functions
 
+
 def dataset(filename):
     """Ensure `filename` names a dataset."""
     from crds import data_file
+
     if data_file.is_dataset(filename):
         return filename
     else:
-        raise ValueError("Parameter", repr(filename),
-                         "does not appear to be a dataset filename.")
+        raise ValueError("Parameter", repr(filename), "does not appear to be a dataset filename.")
+
 
 def reference_file(filename):
     """Ensure `filename` is a reference file."""
-    assert config.is_reference(filename), \
-        "A reference file is required but got bad type: '%s'" % filename
+    assert config.is_reference(filename), "A reference file is required but got bad type: '%s'" % filename
     return filename
+
 
 def mapping(filename):
     """Ensure `filename` is a CRDS mapping file."""
     assert config.is_mapping(filename), "A .rmap, .imap, or .pmap file is required but got: '%s'" % filename
     return filename
 
+
 def mapping_spec(spec):
     """Ensure `spec` is a CRDS mapping specification, a filename or a date based spec."""
-    assert config.is_mapping_spec(spec), "A .rmap, .imap, or .pmap file or date base specification is required but got: '%s'" % spec
+    assert config.is_mapping_spec(spec), (
+        "A .rmap, .imap, or .pmap file or date base specification is required but got: '%s'" % spec
+    )
     return spec
+
 
 def context_spec(spec):
     """Ensure filename is a .pmap or abstract .pmap like "jwst-edit" or date based context spec."""
-    assert config.is_context_spec(spec), \
-        "Parameter should be a .pmap or abstract context specifier, not: " + repr(spec)
+    assert config.is_context_spec(spec), "Parameter should be a .pmap or abstract context specifier, not: " + repr(spec)
     return spec
+
 
 def reference_mapping(filename):
     """Ensure `filename` is a .rmap file."""
     assert filename.endswith(".rmap"), "A .rmap file is required but got: '%s'" % filename
     return filename
 
-#def mapping(filename):
+
+# def mapping(filename):
 #    """Ensure that `filename` is any known CRDS mapping."""
 #    if api.is_known_mapping(filename):
 #        return filename
@@ -79,33 +88,37 @@ def reference_mapping(filename):
 #        raise ValueError("Parameter", repr(filename),
 #                         "is not a known CRDS mapping.")
 
+
 def observatory(obs):
     """Verify that `obs` is the name of an observatory and return it."""
     obs = obs.lower()
-    assert obs in constants.ALL_OBSERVATORIES, \
-        "Unknown observatory " + repr(obs)
+    assert obs in constants.ALL_OBSERVATORIES, "Unknown observatory " + repr(obs)
     return obs
+
 
 def nrange(string):
     """Verify a context range expression MIN:MAX and return (MIN, MAX)."""
-    assert re.match(r"\d+:\d+", string), \
-        "Invalid context range specification " + repr(string)
+    assert re.match(r"\d+:\d+", string), "Invalid context range specification " + repr(string)
     rmin, rmax = [int(x) for x in string.split(":")]
     assert 0 <= rmin <= rmax, "Invalid range values"
     return rmin, rmax
 
+
 def process_key(string):
     """Check the format of a remote process identification  key."""
-    assert config.PROCESS_KEY_RE.match(string),  "Invalid format for process key: " + repr(string)
+    assert config.PROCESS_KEY_RE.match(string), "Invalid format for process key: " + repr(string)
     return string
+
 
 def user_name(string):
     """Check the format of a server user name string."""
     assert config.USER_NAME_RE.match(string), "Invalid user name " + repr(string)
     return string
 
+
 # =============================================================================
 # =============================================================================
+
 
 class Script:
     """Base class for CRDS command line scripts with standard properties.
@@ -115,10 +128,10 @@ class Script:
            shoulld include the program name as args[0].  Explicitly specifying `args` is used to
            instantiate a script in code for testing, etc.
     """
-    
+
     decription = epilog = usage = None
     formatter_class = RawTextHelpFormatter
-    
+
     def __init__(self, argv=None, parser_pars=None, reset_log=True, print_status=False):
         self.stats = utils.TimingStats()
         self._already_reported_stats = False
@@ -129,7 +142,7 @@ class Script:
         self._argv = argv
         if parser_pars is None:
             parser_pars = {}
-        for key in ["description", "epilog", "usage", "formatter_class"]: 
+        for key in ["description", "epilog", "usage", "formatter_class"]:
             self._add_key(key, parser_pars)
         self.parser = argparse.ArgumentParser(prog=argv[0], **parser_pars)
         self.add_args()
@@ -151,7 +164,7 @@ class Script:
     def main(self):
         """Write a main method to perform the actions of the script using self.args."""
         raise NotImplementedError("Script subclasses have to define main().")
-    
+
     def _main(self):
         """_main() completes any complex generic setup,  like determining contexts, and then
         calls self.main() which does the real work of the script.   _main() defines the full
@@ -189,12 +202,12 @@ class Script:
     def locator(self):
         """Return the module for observatory specific file locations and plugins functions."""
         return utils.get_locator_module(self.observatory)
-    
+
     @property
     def obs_pkg(self):
         """Return the package __init__ for observatory specific constants."""
         return utils.get_observatory_package(self.observatory)
-    
+
     def determine_contexts(self):
         """Return the list of contexts used by this invocation of the script.  Empty for Script."""
         return []
@@ -202,12 +215,12 @@ class Script:
     def add_args(self):
         """Add script-specific argparse add_argument calls here on self.parser"""
         # raise NotImplementedError("Script subclasses have to define add_args().")
-    
+
     @property
     def readonly_cache(self):
         """Return True of the cache is readonly."""
         return config.get_cache_readonly()
-    
+
     @property
     @utils.cached
     def observatory(self):
@@ -218,7 +231,7 @@ class Script:
             return self.set_server("jwst")
         if self.args.hst:
             return self.set_server("hst")
-        
+
         obs = os.environ.get("CRDS_OBSERVATORY", None)
         if obs:
             return self.set_server(obs.lower())
@@ -234,7 +247,7 @@ class Script:
             files += self.contexts
         if hasattr(self.args, "files"):
             files += self.args.files if self.args.files else []
-            
+
         for file_ in files:
             if file_.startswith("hst"):
                 return self.set_server("hst")
@@ -264,14 +277,14 @@ class Script:
         if url is not None:
             api.set_crds_server(url)
         return observatory
-    
+
     def _add_key(self, key, parser_pars):
         """Add any defined class attribute for `key` to dict `parser_pars`."""
         inlined = getattr(self, key, parser_pars)
-        if inlined is not None:  
+        if inlined is not None:
             parser_pars[key] = inlined
         return parser_pars
-    
+
     def add_argument(self, *args, **keys):
         """Add a parser argument."""
         self.parser.add_argument(*args, **keys)
@@ -282,49 +295,68 @@ class Script:
 
     def add_standard_args(self):
         """Add standard CRDS command line parameters."""
-        self.add_argument("-v", "--verbose", 
-            help="Set log verbosity to True,  nominal debug level.", action="store_true")
-        self.add_argument("--verbosity", 
-            help="Set log verbosity to a specific level: 0..100.", type=int, default=0)
-        self.add_argument("--dump-cmdline", action="store_true",
-            help="Dump the command line parameters used to start the script to the log.")
-        self.add_argument("-R", "--readonly-cache", action="store_true",
-            help="Don't modify the CRDS cache.  Not compatible with options which implicitly modify the cache.")
-        self.add_argument('-I', '--ignore-cache', action='store_true', dest="ignore_cache",
-                          help="Download required files even if they're already in the cache.")
-        self.add_argument("-V", "--version", 
-            help="Print the software version and exit.", action="store_true")
-        self.add_argument("-J", "--jwst", dest="jwst", action="store_true",
-            help="Force observatory to JWST for determining header conventions.""")
-        self.add_argument("-H", "--hst",  dest="hst", action="store_true",
-            help="Force observatory to HST for determining header conventions.""")
-        self.add_argument("--stats", action="store_true",
-            help="Track and print timing statistics.")
-        self.add_argument("--profile", 
-            help="Output profile stats to the specified file.", type=str, default="")
-        self.add_argument("--log-time", action="store_true",
-            help="Add date/time to log messages.")
-        self.add_argument("--pdb", 
-            help="Run under pdb.", action="store_true")
-        self.add_argument("--debug-traps", 
-            help="Bypass exception error message traps and re-raise exception.", action="store_true")
-        
+        self.add_argument(
+            "-v", "--verbose", help="Set log verbosity to True,  nominal debug level.", action="store_true"
+        )
+        self.add_argument("--verbosity", help="Set log verbosity to a specific level: 0..100.", type=int, default=0)
+        self.add_argument(
+            "--dump-cmdline",
+            action="store_true",
+            help="Dump the command line parameters used to start the script to the log.",
+        )
+        self.add_argument(
+            "-R",
+            "--readonly-cache",
+            action="store_true",
+            help="Don't modify the CRDS cache.  Not compatible with options which implicitly modify the cache.",
+        )
+        self.add_argument(
+            "-I",
+            "--ignore-cache",
+            action="store_true",
+            dest="ignore_cache",
+            help="Download required files even if they're already in the cache.",
+        )
+        self.add_argument("-V", "--version", help="Print the software version and exit.", action="store_true")
+        self.add_argument(
+            "-J",
+            "--jwst",
+            dest="jwst",
+            action="store_true",
+            help="Force observatory to JWST for determining header conventions." "",
+        )
+        self.add_argument(
+            "-H",
+            "--hst",
+            dest="hst",
+            action="store_true",
+            help="Force observatory to HST for determining header conventions." "",
+        )
+        self.add_argument("--stats", action="store_true", help="Track and print timing statistics.")
+        self.add_argument("--profile", help="Output profile stats to the specified file.", type=str, default="")
+        self.add_argument("--log-time", action="store_true", help="Add date/time to log messages.")
+        self.add_argument("--pdb", help="Run under pdb.", action="store_true")
+        self.add_argument(
+            "--debug-traps", help="Bypass exception error message traps and re-raise exception.", action="store_true"
+        )
+
     def print_help(self):
         """Print out command line help."""
         self.parser.print_help()
-    
+
     def require_server_connection(self):
         """Check a *required* server connection and ERROR/exit if offline."""
         try:
             if not self.server_info.connected:
                 raise RuntimeError("Required server connection unavailable.")
         except Exception as exc:
-            self.fatal_error("Failed connecting to CRDS server at CRDS_SERVER_URL =", 
-                             repr(api.get_crds_server()), "::", str(exc))
-    
+            self.fatal_error(
+                "Failed connecting to CRDS server at CRDS_SERVER_URL =", repr(api.get_crds_server()), "::", str(exc)
+            )
+
     @property
-    @utils.cached        
-    def server_info(self):   # see also crds.sync server_info which does not update.
+    @utils.cached
+    def server_info(self):  # see also crds.sync server_info which does not update.
         """Return the server_info dict from the CRDS server *or* cache config for non-networked use where possible."""
         info = heavy_client.get_config_info(self.observatory)
         heavy_client.update_config_info(self.observatory)
@@ -351,8 +383,8 @@ class Script:
                 words.extend(self._load_word_list(word[1:]))
             else:
                 words.append(word)
-        return words # [word.lower() for word in words]
-    
+        return words  # [word.lower() for word in words]
+
     def _load_word_list(self, at_file):
         """Recursively load an @-file, returning a list of words.
         Any stripped line beginning with # is a comment line to be ignored.
@@ -370,21 +402,21 @@ class Script:
                 else:
                     more = word.split()
                 words.extend(more)
-        return self.get_words(words)   # another pass to fix paths
+        return self.get_words(words)  # another pass to fix paths
 
     def get_files(self, file_list):
-        
+
         """Expand a list of files by treating any filename beginning with an
         @-sign as a file containing one word per line.
         """
         return self.get_words(file_list)
-    
+
     @property
     def files(self):
         """Handle @-files and add cache_paths to command line file parameters.
         Nominally self.files are assumed to be references or mappings.  Override locate_file()
         to handle other files.
-        """ 
+        """
         if not hasattr(self.args, "files"):
             raise NotImplementedError("Class must implement list of `self.args.files` raw file paths.")
         files1 = self.get_files(self.args.files)
@@ -392,13 +424,12 @@ class Script:
         for file in files1:
             files2.extend(expand_all_instruments(self.observatory, file))
         return [self.locate_file(fname) for fname in files2]
-        
 
-    # 
+    #
     # NOTES:
     # crds:// will always mean "inside the cache"
     # ./ will always mean "current directory"
-    # pathless files are more ambiguous,  historically in CRDS they mean "in the cache" 
+    # pathless files are more ambiguous,  historically in CRDS they mean "in the cache"
     #    but in most/all OSes pathless means "current directory" so concievably could change
     #
     def locate_file(self, filename):
@@ -407,7 +438,7 @@ class Script:
         This is inappropriate for datasets so in some cases locate_file needs to be overridden.
         Symbolic context names, e.g. hst-operatonal, resolved to literal contexts, e.g. hst_0320.pmap
         """
-        filename = config.pop_crds_uri(filename)   # nominally crds://
+        filename = config.pop_crds_uri(filename)  # nominally crds://
         filename = self.resolve_context(filename) if config.is_date_based_mapping_spec(filename) else filename
         return config.locate_file(filename, observatory=self.observatory)
 
@@ -416,8 +447,8 @@ class Script:
         locate filename inside the CRDS cache.  symbolic context names are also resolved to
         literal context filenames.
         """
-        filename2 = config.pop_crds_uri(filename)   # nominally crds://
-        filename2 = self.resolve_context(filename2) # e.g. hst-operational -->  hst_0320.pmap
+        filename2 = config.pop_crds_uri(filename)  # nominally crds://
+        filename2 = self.resolve_context(filename2)  # e.g. hst-operational -->  hst_0320.pmap
         if filename != filename2:  # Had crds:// or was date based
             return config.locate_file(filename2, self.observatory)
         else:
@@ -426,7 +457,7 @@ class Script:
             else:
                 return filename2
             # return os.path.abspath(filename2)
-    
+
     def _profile(self):
         """Run _main() under the Python profiler."""
         if self.args.profile == "console":
@@ -448,11 +479,11 @@ class Script:
         if self.args.stats and not self._already_reported_stats:
             self.stats.report()
             self._already_reported_stats = True
-    
+
     def increment_stat(self, name, amount=1):
         """Add `amount` to the statistics counter for `name`."""
         self.stats.increment(name, amount)
-        
+
     def get_stat(self, name):
         """Return statistic `name`."""
         return self.stats.get_stat(name)
@@ -460,7 +491,7 @@ class Script:
     def run(self, *args, **keys):
         """script.run() is the same thing as script() but more explicit."""
         return self.__call__(*args, **keys)
-        
+
     def resolve_context(self, context):
         """Resolve context spec `context` into a .pmap, .imap, or .rmap filename,  interpreting
         date based specifications against the CRDS server operational context history.
@@ -468,7 +499,7 @@ class Script:
         if isinstance(context, str) and context.lower() == "none":
             return None
         if not config.is_date_based_mapping_spec(context):
-            return context           
+            return context
         final_context = heavy_client.get_context_name(self.observatory, context)
         if self.show_context_resolution:
             log.info("Symbolic context", repr(context), "resolves to", repr(final_context))
@@ -477,8 +508,9 @@ class Script:
     def get_conjugates(self, file_list):
         """Given a list of references,  return any GEIS data files associated with them."""
         from crds import data_file
-        return [ data_file.get_conjugate(ref) for ref in file_list if data_file.get_conjugate(ref) is not None]
-    
+
+        return [data_file.get_conjugate(ref) for ref in file_list if data_file.get_conjugate(ref) is not None]
+
     def get_file_properties(self, filename):
         """Return (instrument, filekind) corresponding to `file`, and '' for none."""
         return utils.get_file_properties(self.observatory, filename)
@@ -504,10 +536,11 @@ class Script:
         if ignore_cache is None:
             ignore_cache = self.args.ignore_cache
         _localpaths, downloads, nbytes = api.dump_files(
-            context, files, ignore_cache=ignore_cache, raise_exceptions=self.args.pdb)
+            context, files, ignore_cache=ignore_cache, raise_exceptions=self.args.pdb
+        )
         self.increment_stat("total-files", downloads)
         self.increment_stat("total-bytes", nbytes)
-        
+
     def dump_mappings(self, mappings, ignore_cache=None):
         """Download all `mappings` and their dependencies if not already cached.."""
         if ignore_cache is None:
@@ -517,16 +550,15 @@ class Script:
             return
         for mapping in mappings:
             _localpaths, downloads, nbytes = api.dump_mappings3(
-                mapping, ignore_cache=ignore_cache, raise_exceptions=self.args.pdb)
+                mapping, ignore_cache=ignore_cache, raise_exceptions=self.args.pdb
+            )
             self.increment_stat("total-files", downloads)
             self.increment_stat("total-bytes", nbytes)
-            
+
     def sync_files(self, files, context=None, ignore_cache=None):
         """Like dump_files(),  but dumps recursive closure of any mappings rather than just the listed mapping."""
-        mappings = [ os.path.basename(filename)
-                     for filename in files if config.is_mapping(filename) ]
-        references = [os.path.basename(filename)
-                      for filename in files if not config.is_mapping(filename) ]
+        mappings = [os.path.basename(filename) for filename in files if config.is_mapping(filename)]
+        references = [os.path.basename(filename) for filename in files if not config.is_mapping(filename)]
         if mappings:
             self.dump_mappings(mappings, ignore_cache)
         if references:
@@ -548,26 +580,30 @@ class Script:
         else:
             return True
 
+
 # =============================================================================
+
 
 class UniqueErrorsMixin:
     """This mixin supports tracking certain errors messages."""
+
     def __init__(self, *args, **keys):
-        
+
         self.ue_mixin = self.get_empty_mixin()
-        
+
         # Exception trap context manager for use in "with" blocks
         # trapping exceptions.
-        self.error_on_exception = log.exception_trap_logger(
-            self.log_and_track_error)  # can be overridden
+        self.error_on_exception = log.exception_trap_logger(self.log_and_track_error)  # can be overridden
 
     def get_empty_mixin(self):
         """Return a bundle of freshly initialized counters and tracking information.   The
         bundle is used to isolate mixin parameters from subclass parameters to prevent
         accidental overrides.
         """
+
         class Struct:
             pass
+
         mixin = Struct()
         mixin.messages = {}
         mixin.count = Counter()
@@ -581,21 +617,40 @@ class UniqueErrorsMixin:
     def clear_error_counts(self):
         """Clear the error tracking status by re-initializing/zeroing mixin data structures."""
         self.ue_mixin = self.get_empty_mixin()
-        
+
     def add_args(self):
         """Add command line parameters to Script arg parser."""
-        self.add_argument("--dump-unique-errors", action="store_true",
-            help="Record and dump the first instance of each kind of error.")
-        self.add_argument("--unique-errors-file", 
-            help="Write out data names (ids or filenames) for first instance of unique errors to specified file.")
-        self.add_argument("--all-errors-file", 
-            help="Write out all err'ing data names (ids or filenames) to specified file.")
-        self.add_argument("--unique-threshold", type=int, default=1,
-            help="Only print unique error classes with this many or more instances.")
-        self.add_argument("--max-errors-per-class", type=int, default=500, metavar="N",
-            help="Only print the first N detailed errors of any particular class.")
-        self.add_argument("--unique-delimiter", type=str, default=None,
-            help="Use the given delimiter (e.g. semicolon) in tracked error messages to make them amenable to spreadsheets.")
+        self.add_argument(
+            "--dump-unique-errors",
+            action="store_true",
+            help="Record and dump the first instance of each kind of error.",
+        )
+        self.add_argument(
+            "--unique-errors-file",
+            help="Write out data names (ids or filenames) for first instance of unique errors to specified file.",
+        )
+        self.add_argument(
+            "--all-errors-file", help="Write out all err'ing data names (ids or filenames) to specified file."
+        )
+        self.add_argument(
+            "--unique-threshold",
+            type=int,
+            default=1,
+            help="Only print unique error classes with this many or more instances.",
+        )
+        self.add_argument(
+            "--max-errors-per-class",
+            type=int,
+            default=500,
+            metavar="N",
+            help="Only print the first N detailed errors of any particular class.",
+        )
+        self.add_argument(
+            "--unique-delimiter",
+            type=str,
+            default=None,
+            help="Use the given delimiter (e.g. semicolon) in tracked error messages to make them amenable to spreadsheets.",
+        )
 
     def log_and_track_error(self, data, instrument, filekind, *params, **keys):
         """Issue an error message and record the first instance of each unique kind of error,  where "unique"
@@ -618,29 +673,41 @@ class UniqueErrorsMixin:
             log.increment_errors()
             # Before suppressing,  announce the suppression
             if not self.ue_mixin.announce_suppressed[key]:
-                self.ue_mixin.announce_suppressed[key] += 1 # flag
-                log.info("Max error count %d exceeded for:" % self.args.max_errors_per_class,
-                         key.strip(), "suppressing remaining error messages.")
-        return None # for log.exception_trap_logger  --> don't reraise
+                self.ue_mixin.announce_suppressed[key] += 1  # flag
+                log.info(
+                    "Max error count %d exceeded for:" % self.args.max_errors_per_class,
+                    key.strip(),
+                    "suppressing remaining error messages.",
+                )
+        return None  # for log.exception_trap_logger  --> don't reraise
 
     def format_prefix(self, data, instrument, filekind, *params, **keys):
         """Create a standard (instrument,filekind,data) prefix for log messages."""
         delim = self.args.unique_delimiter  # for spreadsheets
-        data, instrument, filekind = str(data), str(instrument), str(filekind) # squash 2.7 unicode
+        data, instrument, filekind = str(data), str(instrument), str(filekind)  # squash 2.7 unicode
         if delim:
-            return log.format(delim, instrument.upper(), delim, filekind.upper(), delim, data, delim,
-                              *params, end="", **keys)
+            return log.format(
+                delim, instrument.upper(), delim, filekind.upper(), delim, data, delim, *params, end="", **keys
+            )
         else:
-            return log.format("instrument="+repr(instrument.upper()), "type="+repr(filekind.upper()), "data="+repr(data), ":: ",
-                              *params, end="", **keys)
+            return log.format(
+                "instrument=" + repr(instrument.upper()),
+                "type=" + repr(filekind.upper()),
+                "data=" + repr(data),
+                ":: ",
+                *params,
+                end="",
+                **keys
+            )
 
     def dump_unique_errors(self):
         """Print out the first instance of errors recorded by log_and_track_error().  Write out error list files."""
         if self.args.dump_unique_errors:
             if self.args.unique_threshold > 1:
-                log.info("Limiting error class reporting to cases with at least", 
-                         self.args.unique_threshold, "instances.")
-            log.info("="*20, "unique error classes", "="*20)
+                log.info(
+                    "Limiting error class reporting to cases with at least", self.args.unique_threshold, "instances."
+                )
+            log.info("=" * 20, "unique error classes", "=" * 20)
             classes = len(self.ue_mixin.messages)
             for key in sorted(self.ue_mixin.messages):
                 if self.ue_mixin.count[key] >= self.args.unique_threshold:
@@ -649,13 +716,13 @@ class UniqueErrorsMixin:
                     self.drop_error_class(key)
                     classes -= 1
             log.info("All unique error types:", classes)
-            log.info("Untracked errors:", log.errors() - self.ue_mixin.tracked_errors)            
-            log.info("="*20, "="*len("unique error classes"), "="*20)
+            log.info("Untracked errors:", log.errors() - self.ue_mixin.tracked_errors)
+            log.info("=" * 20, "=" * len("unique error classes"), "=" * 20)
         if self.args.all_errors_file:
             self.dump_error_data(self.args.all_errors_file, self.ue_mixin.all_data_names)
         if self.args.unique_errors_file:
             self.dump_error_data(self.args.unique_errors_file, self.ue_mixin.unique_data_names)
-            
+
     def drop_error_class(self, key):
         """Remove the errors classified by `key` from the error classes and counts."""
         for data in self.ue_mixin.data_names_by_key[key]:
@@ -664,36 +731,66 @@ class UniqueErrorsMixin:
             self.ue_mixin.count[key] -= 1
 
     def dump_error_data(self, filename, error_list):
-        "Write out list of err'ing filenames or dataset ids to `filename`."""
+        "Write out list of err'ing filenames or dataset ids to `filename`." ""
         with open(filename, "w+") as err_file:
-            err_file.write("\n".join(sorted(error_list))+"\n")            
+            err_file.write("\n".join(sorted(error_list)) + "\n")
+
 
 # =============================================================================
 
+
 class ContextsScript(Script):
     """Baseclass for a script proving support for command line specified contexts."""
-    
+
     def __init__(self, *args, **keys):
         super(ContextsScript, self).__init__(*args, **keys)
         self.contexts = []
 
     def add_args(self):
         group = self.get_exclusive_arg_group(required=False)
-        group.add_argument('--contexts', metavar='CONTEXT', type=mapping_spec, nargs='*',
-            help="Specify a list of CRDS mappings to operate on: .pmap, .imap, or .rmap or date-based specification")        
-        group.add_argument("--range", metavar="MIN:MAX",  type=nrange, dest="range", default=None,
-            help='Operate for pipeline context ids (.pmaps) between <MIN> and <MAX>.')
-        group.add_argument('--all', action='store_true',
-            help='Operate with respect to all known CRDS contexts.')
-        group.add_argument('--last-n-contexts', metavar="N", type=int, default=None,
-            help='Operate with respect to the last N contexts.')
-        group.add_argument("--up-to-context", metavar='CONTEXT', type=mapping_spec, nargs=1, default=None,
-            help='Operate on all contexts up to and including the specified context.')
-        group.add_argument("--after-context", metavar='CONTEXT', type=mapping_spec, nargs=1, default=None,
-            help='Operate on all contexts after and including the specified context.')
-        
-        self.add_argument('--include-orphans', action='store_true',
-            help='Include reference files not mentioned by any contexts.')
+        group.add_argument(
+            "--contexts",
+            metavar="CONTEXT",
+            type=mapping_spec,
+            nargs="*",
+            help="Specify a list of CRDS mappings to operate on: .pmap, .imap, or .rmap or date-based specification",
+        )
+        group.add_argument(
+            "--range",
+            metavar="MIN:MAX",
+            type=nrange,
+            dest="range",
+            default=None,
+            help="Operate for pipeline context ids (.pmaps) between <MIN> and <MAX>.",
+        )
+        group.add_argument("--all", action="store_true", help="Operate with respect to all known CRDS contexts.")
+        group.add_argument(
+            "--last-n-contexts",
+            metavar="N",
+            type=int,
+            default=None,
+            help="Operate with respect to the last N contexts.",
+        )
+        group.add_argument(
+            "--up-to-context",
+            metavar="CONTEXT",
+            type=mapping_spec,
+            nargs=1,
+            default=None,
+            help="Operate on all contexts up to and including the specified context.",
+        )
+        group.add_argument(
+            "--after-context",
+            metavar="CONTEXT",
+            type=mapping_spec,
+            nargs=1,
+            default=None,
+            help="Operate on all contexts after and including the specified context.",
+        )
+
+        self.add_argument(
+            "--include-orphans", action="store_true", help="Include reference files not mentioned by any contexts."
+        )
 
     def determine_contexts(self):
         """Support explicit specification of contexts, context id range, or all."""
@@ -706,12 +803,12 @@ class ContextsScript(Script):
             contexts = []
             for ctx in _contexts2:
                 resolved = self.resolve_context(ctx)
-                if resolved != 'N/A':
+                if resolved != "N/A":
                     contexts.append(resolved)
         elif self.args.all:
             contexts = self._list_mappings("*.pmap")
         elif self.args.last_n_contexts:
-            contexts = self._list_mappings("*.pmap")[-self.args.last_n_contexts:]
+            contexts = self._list_mappings("*.pmap")[-self.args.last_n_contexts :]
         elif self.args.range:
             rmin, rmax = self.args.range
             contexts = []
@@ -724,13 +821,17 @@ class ContextsScript(Script):
                         contexts.append(context)
         elif self.args.up_to_context:
             pmaps = self._list_mappings("*.pmap")
-            with log.augment_exception("Invalid --up-to-context", repr(self.args.up_to_context[0]), exc_class=exceptions.CrdsError):
+            with log.augment_exception(
+                "Invalid --up-to-context", repr(self.args.up_to_context[0]), exc_class=exceptions.CrdsError
+            ):
                 up_to_context = self.resolve_context(self.args.up_to_context[0])
-                up_to_ix = pmaps.index(up_to_context)+1
+                up_to_ix = pmaps.index(up_to_context) + 1
                 contexts = pmaps[:up_to_ix]
         elif self.args.after_context:
             pmaps = self._list_mappings("*.pmap")
-            with log.augment_exception("Invalid --after-context", repr(self.args.after_context[0]), exc_class=exceptions.CrdsError):
+            with log.augment_exception(
+                "Invalid --after-context", repr(self.args.after_context[0]), exc_class=exceptions.CrdsError
+            ):
                 after_context = self.resolve_context(self.args.after_context[0])
                 after_ix = pmaps.index(after_context)
                 contexts = pmaps[after_ix:]
@@ -745,11 +846,11 @@ class ContextsScript(Script):
         """Return a list of all the .pmap's on the CRDS Server."""
         self.require_server_connection()
         return heavy_client.list_mappings(self.observatory, glob_pattern)
-    
+
     def _list_references(self, glob_pattern="*"):
         self.require_server_connection()
         return api.list_references(self.observatory, glob_pattern)
-    
+
     def _orphan_references(self):
         """Return the set of reference files which exist the CRDS catalog but
         which cannot be found within the reference files referred to by any .pmap.
@@ -765,7 +866,8 @@ class ContextsScript(Script):
         if ignore_cache is None:
             ignore_cache = self.args.ignore_cache
         _localpaths, downloads, nbytes = api.dump_files(
-            context, files, ignore_cache=ignore_cache, raise_exceptions=self.args.pdb)
+            context, files, ignore_cache=ignore_cache, raise_exceptions=self.args.pdb
+        )
         self.increment_stat("total-files", downloads)
         self.increment_stat("total-bytes", nbytes)
 
@@ -783,20 +885,20 @@ class ContextsScript(Script):
                 self.dump_files(self.default_context, mappings)
         else:
             mappings = self.contexts
-            
+
         useable_contexts, mapping_closure = self._dump_and_vet_mappings(mappings)
-        self.contexts = useable_contexts   # XXXX reset self.contexts
+        self.contexts = useable_contexts  # XXXX reset self.contexts
         log.verbose("Got mappings from specified (usable) contexts: ", self.contexts, verbosity=55)
 
         return mapping_closure
-    
+
     def _dump_and_vet_mappings(self, mappings):
         """Ensure all mapping files listed in `mappings` are in the CRDS cache.
         
         Returns  (list(useable_contexts), list(mappings_closures))
         """
         log.verbose("Getting and checking specified mappings.", verbosity=55)
-        
+
         # Based on the specified mappings,  identify the  mappings they refer to
         mapping_closure = set()
         for mapping in mappings:
@@ -805,22 +907,21 @@ class ContextsScript(Script):
                     loadable = rmap.get_cached_mapping(mapping)
                     loadable_names = loadable.mapping_names()
                 except Exception as exc:
-                    log.verbose("Failed loading", repr(mapping), 
-                                "using API call to get mapping names", str(exc))
+                    log.verbose("Failed loading", repr(mapping), "using API call to get mapping names", str(exc))
                     loadable_names = api.get_mapping_names(mapping)
                 mapping_closure |= set(loadable_names)
-        
-        # Dump all missing files in one call        
+
+        # Dump all missing files in one call
         with log.verbose_warning_on_exception("Mapping closure download failed"):
             self.dump_files(self.default_context, mapping_closure)
-        
+
         # After attempting to sync,  identify which mappings are actually loadable now.
         useable_contexts = []
         for mapping in mappings:
             with log.warn_on_exception("Failed loading", repr(mapping)):
                 _loaded = rmap.get_cached_mapping(mapping)
                 useable_contexts.append(mapping)
-        
+
         return sorted(useable_contexts), sorted(mapping_closure)
 
     def _get_context_references(self, mappings=None):
@@ -838,7 +939,7 @@ class ContextsScript(Script):
                 log.verbose("Determined references from CRDS server service", repr(context))
                 references |= set(api.get_reference_names(context))
         return references
-    
+
     def get_context_references(self):
         """Return the sorted list of references defined by the closure of the specified 
         contexts.   If --include-orphans was specified,  also include reference files
@@ -848,6 +949,7 @@ class ContextsScript(Script):
         if self.args.include_orphans:
             references |= self._orphan_references()
         return sorted(list(references))
+
 
 def expand_all_instruments(observatory, context):
     """Expand symbolic context specifiers for rmaps with "all" for instrument 
@@ -864,9 +966,11 @@ def expand_all_instruments(observatory, context):
         observatory = mtch.group("observatory")
         filekind = mtch.group("filekind")
         date = mtch.group("date")
-        all_maps = [ "-".join([observatory, instrument, filekind, date])
-                for instrument in pmap.selections.keys() if instrument != "system"]
+        all_maps = [
+            "-".join([observatory, instrument, filekind, date])
+            for instrument in pmap.selections.keys()
+            if instrument != "system"
+        ]
     else:
         all_maps = [context]
     return all_maps
-

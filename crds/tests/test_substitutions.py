@@ -16,6 +16,7 @@ from crds.tests import test_config
 
 # ==================================================================================
 
+
 def substitutions_validate_hst():
     """
     >>> old_state = test_config.setup(url="https://hst-serverless-mode.stsci.edu")
@@ -147,6 +148,7 @@ def substitutions_validate_hst():
     >>> test_config.cleanup(old_state)
     """
 
+
 def substitutions_validate_jwst():
     """
     >>> old_state = test_config.setup(url="https://jwst-serverless-mode.stsci.edu")
@@ -163,13 +165,16 @@ def substitutions_validate_jwst():
     >>> test_config.cleanup(old_state)
     """
 
+
 # ==================================================================================
+
 
 def main():
     """Run module tests,  for now just doctests only."""
     from crds.tests import test_substitutions, tstmod
+
     return tstmod(test_substitutions)
+
 
 if __name__ == "__main__":
     print(main())
-

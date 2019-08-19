@@ -15,6 +15,7 @@ from . import generic_tpn
 # =============================================================================
 #  Global table loads used at operational runtime:
 
+
 def _invert_instr_dict(dct):
     """Invert a set of nested dictionaries of the form {instr: {key: val}}
     to create a dict of the form {instr: {val: key}}.
@@ -23,6 +24,7 @@ def _invert_instr_dict(dct):
     for instr in dct:
         inverted[instr] = utils.invert_dict(dct[instr])
     return inverted
+
 
 # =============================================================================
 '''
@@ -36,6 +38,7 @@ def write_spec(specpath, spec_dict):
 '''
 
 # =============================================================================
+
 
 class TypeSpec(dict):
     """This class captures type definition parameters for a single type"""
@@ -72,7 +75,9 @@ class TypeSpec(dict):
         else:
             return cls(rmap.load_mapping(filename).header)
 
+
 # =============================================================================
+
 
 def load_specs(spec_path):
     """Load either the combined .json formatted type specs (preferred) or specs from 
@@ -85,14 +90,12 @@ def load_specs(spec_path):
         headers = load_raw_specs(spec_path)
         with log.warn_on_exception("Failed to save type specs .json at", repr(combined_specs_path)):
             save_json_specs(headers, combined_specs_path)
-    type_specs = { instr : 
-                   { filekind : TypeSpec(headers[instr][filekind]) 
-                     for filekind in headers[instr]
-                     }
-                   for instr in headers
-                   }
+    type_specs = {
+        instr: {filekind: TypeSpec(headers[instr][filekind]) for filekind in headers[instr]} for instr in headers
+    }
     return type_specs
-    
+
+
 def load_raw_specs(spec_path):
     """Return a dictionary of TypeSpecs loaded from directory `spec_path` of form:
     
@@ -107,33 +110,39 @@ def load_raw_specs(spec_path):
         return specs
     return {}
 
+
 def save_json_specs(specs, combined_specs_path):
     """Write out the specs dictionary returned by _load_specs() as .json in one combined file."""
-    specs_json = json.dumps(specs, indent=4, sort_keys=True, separators=(',', ':'))
+    specs_json = json.dumps(specs, indent=4, sort_keys=True, separators=(",", ":"))
     with open(combined_specs_path, "w+") as specs_file:
         specs_file.write(specs_json)
         log.info("Saved combined type specs to", repr(combined_specs_path))
+
 
 def load_json_specs(combined_specs_path):
     """Load specs from the .json combined spec file under `specs_path`."""
     with open(combined_specs_path, "r") as combined_specs_file:
         return json.load(combined_specs_file)
 
+
 # =============================================================================
+
 
 def from_package_file(observatory, pkg):
     """Given the __file__ from a package,  load specs from the package's specs subdirectory
     and construct and return a TypeParameters object.
     """
-    here = (os.path.dirname(pkg) or ".")
-    specs_path = os.path.join(here, "specs") 
+    here = os.path.dirname(pkg) or "."
+    specs_path = os.path.join(here, "specs")
     unified_defs = load_specs(specs_path)
     return TypeParameters(observatory, unified_defs)
+
 
 class TypeParameters:
     """Inialized from a dictionary of TypeSpec's from load_specs(), compute observatory enumerations
     and type field inter-relationships and cache them as attributes.
     """
+
     def __init__(self, observatory, unified_defs):
 
         self.observatory = observatory
@@ -146,59 +155,65 @@ class TypeParameters:
 
         with log.error_on_exception("Can't determine types from specs."):
             self.filekinds = sorted(
-                set(reftype.lower() for instr, reftypes in sorted_udef_items
-                    for reftype in reftypes))
+                set(reftype.lower() for instr, reftypes in sorted_udef_items for reftype in reftypes)
+            )
 
         with log.error_on_exception("Can't determine extensions from specs."):
             self.extensions = sorted(
-                set(params.get("file_ext", ".fits") for instr, reftypes in sorted_udef_items
-                    for reftype, params in reftypes.items())) + [".pmap", ".imap", ".rmap"]
+                set(
+                    params.get("file_ext", ".fits")
+                    for instr, reftypes in sorted_udef_items
+                    for reftype, params in reftypes.items()
+                )
+            ) + [".pmap", ".imap", ".rmap"]
 
         with log.error_on_exception("Can't determine type text descriptions from specs."):
             self.text_descr = {
-                reftype.lower() : params["text_descr"] 
+                reftype.lower(): params["text_descr"]
                 for instr, reftypes in sorted_udef_items
                 for reftype, params in reftypes.items()
-                }
+            }
 
         with log.error_on_exception("Failed determining filekind_to_suffix"):
             self._filekind_to_suffix = {
-                instr : {
-                    filekind.lower() : self.unified_defs[instr][filekind]["suffix"].lower()
+                instr: {
+                    filekind.lower(): self.unified_defs[instr][filekind]["suffix"].lower()
                     for filekind in self.unified_defs[instr]
-                    }
-                for instr in self.unified_defs
                 }
-            
+                for instr in self.unified_defs
+            }
+
         with log.error_on_exception("Failed determining suffix_to_filekind"):
             self._suffix_to_filekind = _invert_instr_dict(self._filekind_to_suffix)
 
         with log.error_on_exception("Failed determining filetype_to_suffix"):
             self._filetype_to_suffix = {
-                instr : {
-                    self.unified_defs[instr][filekind]["filetype"].lower() : self.unified_defs[instr][filekind]["suffix"].lower()
+                instr: {
+                    self.unified_defs[instr][filekind]["filetype"]
+                    .lower(): self.unified_defs[instr][filekind]["suffix"]
+                    .lower()
                     for filekind in self.unified_defs[instr]
-                    }
-                for instr in self.unified_defs
                 }
+                for instr in self.unified_defs
+            }
 
         with log.error_on_exception("Failed determining suffix_to_filetype"):
             self.suffix_to_filetype = _invert_instr_dict(self._filetype_to_suffix)
 
         with log.error_on_exception("Failed determining unique_rowkeys"):
             self.row_keys = {
-                instr : {
-                    filekind.lower() : self.unified_defs[instr][filekind]["unique_rowkeys"]
+                instr: {
+                    filekind.lower(): self.unified_defs[instr][filekind]["unique_rowkeys"]
                     for filekind in self.unified_defs[instr]
-                    }
-                for instr in self.unified_defs
                 }
+                for instr in self.unified_defs
+            }
 
     @property
     def locator(self):
         """Deferred evaluation do to import orders."""
         return utils.get_locator_module(self.observatory)  # pluggable by observatory
-            
+
     def filetype_to_filekind(self, instrument, filetype):
         """Map the value of a FILETYPE keyword onto it's associated
         keyword name,  i.e.  'dark image' --> 'darkfile'
@@ -227,7 +242,7 @@ class TypeParameters:
             instrument = "nicmos"
         return self._filekind_to_suffix[instrument][filekind]
 
-# =============================================================================
+    # =============================================================================
 
     @utils.cached
     def get_all_tpn_paths(self, instrument, filekind, field):
@@ -235,9 +250,10 @@ class TypeParameters:
         Doesn't include "extra" TpnInfo's defined by a project for a specific
         reference file.
         """
-        return [ self.locator.tpn_path(tpn_file)
-                 for tpn_file in self.reference_props_to_validator_keys(
-                         instrument, filekind, field=field) ]
+        return [
+            self.locator.tpn_path(tpn_file)
+            for tpn_file in self.reference_props_to_validator_keys(instrument, filekind, field=field)
+        ]
 
     @utils.cached
     def get_all_tpninfos(self, instrument, filekind, field):
@@ -249,7 +265,6 @@ class TypeParameters:
         for tpn_path in self.get_all_tpn_paths(instrument, filekind, field):
             tpns.extend(generic_tpn.get_tpninfos(tpn_path))
         return sorted(list(set(tpns)))
-    
 
     def reference_props_to_validator_keys(self, instrument, filekind, field="tpn"):
         """Return the sequence of validator keys associated with `filename`.   A validator key
@@ -257,6 +272,7 @@ class TypeParameters:
         as by functions on the header of `filename`.
         """
         results = []
+
         def append_tpn_level(results, instrument, filekind):
             """Append the validator key for one level of the `instrument`
             and `filekind` mutating list `results`.
@@ -266,16 +282,17 @@ class TypeParameters:
                 log.verbose("Adding validator key", repr(tpnfile), verbosity=70)
                 results.append(tpnfile)
             except Exception as exc:
-                log.verbose_warning("Can't find TPN key for", 
-                    (instrument, filekind, field), ":", str(exc),
-                                    verbosity=75)
+                log.verbose_warning(
+                    "Can't find TPN key for", (instrument, filekind, field), ":", str(exc), verbosity=75
+                )
+
         append_tpn_level(results, instrument, filekind)
         append_tpn_level(results, instrument, "all")
         append_tpn_level(results, "all", filekind)
         append_tpn_level(results, "all", "all")
         return results
 
-# -----------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------
 
     def reference_name_to_tpninfos(self, filename, field="tpn"):
         """Return the .tpn file key associated with reference `filename`.
@@ -287,7 +304,7 @@ class TypeParameters:
         instrument, filekind = self.locator.get_file_properties(filepath)
         return self.get_all_tpninfos(instrument, filekind, field=field)
 
-# -----------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------
 
     def reference_name_to_tpn_text(self, filename, field="tpn"):
         """Given reference `filename`,  return the text of the corresponding .tpn"""
@@ -296,7 +313,7 @@ class TypeParameters:
         for tpn in reversed(self.get_all_tpn_paths(instrument, filekind, field)):
             label = "From TPN: " + os.path.basename(tpn)
             underline = len(label) * "-"
-            lines += [ label, underline ]
+            lines += [label, underline]
             lines += generic_tpn.load_tpn_lines(tpn)
             lines += [""]
         return "\n".join(lines)
@@ -305,7 +322,7 @@ class TypeParameters:
         """Given reference `filename`,  return the text of the corresponding _ld.tpn"""
         return reference_name_to_tpn_text(filename, "ld_tpn")
 
-# =============================================================================
+    # =============================================================================
 
     def get_row_keys(self, instrument, filekind):
         """Return the row_keys which define unique table rows corresponding to mapping.
@@ -335,7 +352,7 @@ class TypeParameters:
         except KeyError:
             log.verbose("No unique row keys defined for", repr((instrument, filekind)))
             return []
-        
+
     def get_row_keys_by_instrument(self, instrument):
         """To support defining the CRDS server interface to DADSOPS, return the
         sorted list of row keys necessary to perform all the table lookups
@@ -361,7 +378,9 @@ class TypeParameters:
         filekind = filekind.lower()
         return self.unified_defs[instrument][filekind][name]
 
+
 # =============================================================================
+
 
 def get_types_object(observatory):
     """Each observatory package instantiates a types object from the observatory's 
@@ -371,4 +390,3 @@ def get_types_object(observatory):
     """
     pkg = utils.get_observatory_package(observatory)
     return getattr(pkg, "TYPES")
-

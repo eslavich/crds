@@ -4,6 +4,7 @@ import os.path
 from crds.core import log, utils, config, timestamp, cmdline
 from crds.client import api
 
+
 class QueryAffectedDatasetsScript(cmdline.Script):
 
     description = """
@@ -211,47 +212,93 @@ The --verbose parameter includes debug output in excess of normal application lo
 for debugging subclasses of the QueryAffectedDatasetsScript skeletal framework.
 
 """
+
     def add_args(self):
         """Add diff-specific command line parameters."""
 
-        self.add_argument("-l", "--list-history", dest="list_history", action="store_true",
-            help="Print out the context history and exit.")
+        self.add_argument(
+            "-l",
+            "--list-history",
+            dest="list_history",
+            action="store_true",
+            help="Print out the context history and exit.",
+        )
 
-        self.add_argument("-x", "--starting-context", dest="starting_context",
-            help="Use the affected datasets computation starting with this history index integer, date, or context name. Defaults to last processed.", 
-            metavar="INT_OR_NAME", default=None, type=str)
-        
-        self.add_argument("-y", "--stopping-context", dest="stopping_context", 
+        self.add_argument(
+            "-x",
+            "--starting-context",
+            dest="starting_context",
+            help="Use the affected datasets computation starting with this history index integer, date, or context name. Defaults to last processed.",
+            metavar="INT_OR_NAME",
+            default=None,
+            type=str,
+        )
+
+        self.add_argument(
+            "-y",
+            "--stopping-context",
+            dest="stopping_context",
             help="Use the affected datasets computation starting with this history index integer, date, or context name. Defaults to end of history.",
-            metavar="INT_OR_NAME", default=None, type=str)
-        
-        self.add_argument("-s", "--single-context-switch", dest="single_context_switch", action="store_true",
-            help="For default indexing, if multiple new contexts are available,  just process one new context and stop.")
+            metavar="INT_OR_NAME",
+            default=None,
+            type=str,
+        )
 
-        self.add_argument("-i", "--ignore-missing-results", dest="ignore_missing_results", action="store_true",
-            help="Skip over any requested context switch which has no pre-computed results on the CRDS server.  Otherwise fatal.")
+        self.add_argument(
+            "-s",
+            "--single-context-switch",
+            dest="single_context_switch",
+            action="store_true",
+            help="For default indexing, if multiple new contexts are available,  just process one new context and stop.",
+        )
 
-        self.add_argument("-k", "--ignore-errant-history", dest="ignore_errant_history", action="store_true",
-            help="If bestrefs status indicates errors occurred, issue an error message but include the dataset ids in results.")
+        self.add_argument(
+            "-i",
+            "--ignore-missing-results",
+            dest="ignore_missing_results",
+            action="store_true",
+            help="Skip over any requested context switch which has no pre-computed results on the CRDS server.  Otherwise fatal.",
+        )
 
-        self.add_argument("-z", "--fail-on-errant-history", dest="fail_on_errant_history", action="store_true",
-            help="If bestrefs status indicates errors occurred, quit processing.  (fix the server and rerun).")
-        
-        self.add_argument("-f", "--last-processed-file", dest="last_processed_file",
-            help="File containing the tuple of the last history item successfully processed. Defaults to file in CRDS cache.")
+        self.add_argument(
+            "-k",
+            "--ignore-errant-history",
+            dest="ignore_errant_history",
+            action="store_true",
+            help="If bestrefs status indicates errors occurred, issue an error message but include the dataset ids in results.",
+        )
 
-        self.add_argument("-q", "--quiet", dest="quiet", action="store_true",
-            help="Terser log output.")
+        self.add_argument(
+            "-z",
+            "--fail-on-errant-history",
+            dest="fail_on_errant_history",
+            action="store_true",
+            help="If bestrefs status indicates errors occurred, quit processing.  (fix the server and rerun).",
+        )
 
-        self.add_argument("-r", "--reset", dest="reset", action="store_true",
-            help="Reset the last-context-processed file to the end of the current history.  Useful for init and reinit.")
+        self.add_argument(
+            "-f",
+            "--last-processed-file",
+            dest="last_processed_file",
+            help="File containing the tuple of the last history item successfully processed. Defaults to file in CRDS cache.",
+        )
+
+        self.add_argument("-q", "--quiet", dest="quiet", action="store_true", help="Terser log output.")
+
+        self.add_argument(
+            "-r",
+            "--reset",
+            dest="reset",
+            action="store_true",
+            help="Reset the last-context-processed file to the end of the current history.  Useful for init and reinit.",
+        )
 
     def __init__(self, *args, **keys):
         super(QueryAffectedDatasetsScript, self).__init__(*args, **keys)
         self.contributing_context_switches = 0
 
     def main(self):
-        """Top level processing method."""    
+        """Top level processing method."""
         self.require_server_connection()
         if self.args.list_history:
             return self.list_history()
@@ -264,8 +311,8 @@ for debugging subclasses of the QueryAffectedDatasetsScript skeletal framework.
         if effects:
             self.save_last_processed(effects)
         return log.errors()
-        
-    def process(self,  effects):
+
+    def process(self, effects):
         """Output the results of all the context transitions."""
         ids = []
         for i, affected in effects:
@@ -275,14 +322,14 @@ for debugging subclasses of the QueryAffectedDatasetsScript skeletal framework.
                 self.use_affected(i, affected)
                 self.contributing_context_switches += 1
         return sorted(set(ids))
-        
+
     def use_affected(self, i, affected):
         """PLUGIN: for doing something with each individual context switch set of effects. Default does nothing.
         i         -- the ending history index of the transition
         affected  -- dictionary of effects info
         """
         pass
-    
+
     def use_all_ids(self, effects, ids):
         """PLUGIN: for using all ids which passed availability and error screening. Default prints ids to stdout.
         
@@ -292,45 +339,45 @@ for debugging subclasses of the QueryAffectedDatasetsScript skeletal framework.
         """
         if ids:
             print("\n".join(ids))
-        
+
     def log_affected(self, i, affected):
         """PLUGIN: Banner log and debug output for each context switch."""
         if log.get_verbose():
-            print("#"*100, file=sys.stderr)
+            print("#" * 100, file=sys.stderr)
             log.debug("History:", i, "Effects:\n", log.PP(affected))
         else:
             if not self.args.quiet:
-                print("#"*100, file=sys.stderr)
+                print("#" * 100, file=sys.stderr)
                 print(affected.bestrefs_err_summary, file=sys.stderr)
 
     def log_all_ids(self, effects, ids):
         """PLUGIN: Summary output after all contexts processed."""
         if self.args.quiet:
-            return 
+            return
         if not effects:
             log.info("No new results are available.")
         else:
             if not ids:
                 log.info("No ids were affected.")
-            print("#"*100, file=sys.stderr)
+            print("#" * 100, file=sys.stderr)
             log.info("Contributing context switches =", len(effects))
             log.info("Total products affected =", len(ids))
         log.standard_status()
-        
+
     def list_history(self):
         """Print out the context history."""
-        for i in range(self.history_start, self.history_stop+1):
+        for i in range(self.history_start, self.history_stop + 1):
             print((i,) + self.history[i])
-   
+
     @property
-    @utils.cached         
+    @utils.cached
     def history(self):
         """Return the context history or fail.  Should nominally always work."""
         try:
             return api.get_context_history(self.observatory)
         except Exception as exc:
-            self.fatal_error("get_context_history failed: ", str(exc).replace("OtherError:",""))
-            
+            self.fatal_error("get_context_history failed: ", str(exc).replace("OtherError:", ""))
+
     def get_affected(self, old_context, new_context):
         """Return the affected datasets Struct for the transition from old_context to new_context,  
         or None if the results aren't ready yet.   
@@ -343,11 +390,13 @@ for debugging subclasses of the QueryAffectedDatasetsScript skeletal framework.
                     log.info("No results for", old_context, "-->", new_context, "ignoring and proceeding.")
                     affected = None
                 else:
-                    self.fatal_error("Results for", old_context, "-->", new_context, "don't exist or are not yet complete.")
+                    self.fatal_error(
+                        "Results for", old_context, "-->", new_context, "don't exist or are not yet complete."
+                    )
             else:
-                self.fatal_error("get_affected_datasets failed: ", str(exc).replace("OtherError:",""))
+                self.fatal_error("get_affected_datasets failed: ", str(exc).replace("OtherError:", ""))
         return affected
-    
+
     def ignore_errors(self, i, affected):
         """Check each context switch for errors during bestrefs run. Fail or return False on errors."""
         ignore = False
@@ -359,21 +408,25 @@ for debugging subclasses of the QueryAffectedDatasetsScript skeletal framework.
                 self.fatal_error(message)
             else:
                 log.error(message)
-        return ignore          
+        return ignore
 
     def polled(self):
         """Output the latest affected datasets taken from the history starting item onward.
         Since the history drives and ultimately precedes any affected datasets computation,  there's
         no guarantee that every history item is available.
         """
-        assert 0 <= self.history_start < len(self.history), "Invalid history interval with starting index " + repr(self.history_start)
-        assert 0 <= self.history_stop  < len(self.history), "Invalid history interval with stopping index " + repr(self.history_stop)
+        assert 0 <= self.history_start < len(self.history), "Invalid history interval with starting index " + repr(
+            self.history_start
+        )
+        assert 0 <= self.history_stop < len(self.history), "Invalid history interval with stopping index " + repr(
+            self.history_stop
+        )
         assert self.history_start <= self.history_stop, "Invalid history interval,  start >= stop."
         effects = []
         for i in range(self.history_start, self.history_stop):
-            log.info("Fetching effects for", (i,) + self.history[i+1])
+            log.info("Fetching effects for", (i,) + self.history[i + 1])
             old_context = self.history[i][1]
-            new_context = self.history[i+1][1]
+            new_context = self.history[i + 1][1]
             affected = self.get_affected(old_context, new_context)
             if affected:
                 effects.append((i, affected))
@@ -396,7 +449,7 @@ for debugging subclasses of the QueryAffectedDatasetsScript skeletal framework.
             else:
                 item = 0
         return item
-    
+
     @property
     @utils.cached
     def history_stop(self):
@@ -411,7 +464,7 @@ for debugging subclasses of the QueryAffectedDatasetsScript skeletal framework.
             else:
                 item = len(self.history) - 1
         return item
-        
+
     def convert_context(self, context):
         """Convert an integer or context name into a history index."""
         try:
@@ -431,20 +484,20 @@ for debugging subclasses of the QueryAffectedDatasetsScript skeletal framework.
                 break
         else:
             self.fatal_error("Context = '{}' not found in history".format(context))
-        assert 0 <= item < len(self.history),  "Invalid history item " + repr(item)
+        assert 0 <= item < len(self.history), "Invalid history item " + repr(item)
         return item
-    
+
     def save_last_processed(self, effects):
         """Record the last index history tuple successfully processed."""
         last_ix = effects[-1][0]
         if last_ix == -1:
             return
-        hist = (last_ix+1,) + tuple(self.history[last_ix + 1])
+        hist = (last_ix + 1,) + tuple(self.history[last_ix + 1])
         self._write_last_processed(hist)
 
     def reset_last_processed(self):
         """Reset the state of the last context processed marker to the end of the current history."""
-        hist = (len(self.history)-1,) + tuple(self.history[-1])
+        hist = (len(self.history) - 1,) + tuple(self.history[-1])
         self._write_last_processed(hist)
 
     def _write_last_processed(self, hist):
@@ -462,6 +515,7 @@ for debugging subclasses of the QueryAffectedDatasetsScript skeletal framework.
             return self.args.last_processed_file
         else:
             return os.path.join(config.get_crds_cfgpath(self.observatory), "ad_last_processed")
-            
+
+
 if __name__ == "__main__":
     sys.exit(QueryAffectedDatasetsScript()())

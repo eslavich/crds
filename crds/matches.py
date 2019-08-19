@@ -11,7 +11,7 @@ The api function find_full_match_paths() returns a list of "match paths",  lists
 import sys
 import os.path
 from collections import defaultdict
-from pprint import pprint as pp   # doctests
+from pprint import pprint as pp  # doctests
 
 import crds
 from crds.core import log, utils, cmdline, selectors
@@ -19,12 +19,16 @@ from crds.client import api
 
 # ===================================================================
 
+
 def test():
     """Run any doctests."""
     import doctest, crds.matches
+
     return doctest.testmod(crds.matches)
 
+
 # ===================================================================
+
 
 def find_full_match_paths(context, reffile):
     """Return the list of full match paths for `reference` in `context` as a
@@ -62,6 +66,7 @@ def find_full_match_paths(context, reffile):
     """
     ctx = crds.get_pickled_mapping(context, cached=True)  # reviewed
     return ctx.file_matches(reffile)
+
 
 def find_match_paths_as_dict(context, reffile):
     """Return the matching parameters for reffile as a list of dictionaries, one dict for
@@ -102,7 +107,8 @@ def find_match_paths_as_dict(context, reffile):
       'observatory': 'hst'}]
     """
     matches = find_full_match_paths(context, reffile)
-    return [ _flatten_items_to_dict(match) for match in matches ]
+    return [_flatten_items_to_dict(match) for match in matches]
+
 
 def _flatten_items_to_dict(match_path):
     """Given a `match_path` which is a sequence of parameter items and sub-paths,  return
@@ -118,6 +124,7 @@ def _flatten_items_to_dict(match_path):
             result.update(_flatten_items_to_dict(par))
     return result
 
+
 def get_minimum_exptime(context, references):
     """Return the minimum EXPTIME for the list of `references` with respect to `context`.
     This is used to define the potential reprocessing impact of new references,  since
@@ -129,12 +136,13 @@ def get_minimum_exptime(context, references):
     """
     return min([_get_minimum_exptime(context, ref) for ref in references])
 
+
 def _get_minimum_exptime(context, reffile):
     """Given a `context` and a `reffile` in it,  return the minimum EXPTIME for all of
     it's match paths constructed from DATE-OBS and TIME-OBS.
     """
     path_dicts = find_match_paths_as_dict(context, reffile)
-    exptimes = [ get_exptime(path_dict) for path_dict in path_dicts ]
+    exptimes = [get_exptime(path_dict) for path_dict in path_dicts]
     return min(exptimes)
 
 
@@ -142,7 +150,8 @@ DATE_TIME_PAIRS = [
     ("DATE-OBS", "TIME-OBS"),
     ("META.OBSERVATION.DATE", "META.OBSERVATION.TIME"),
     ("META_OBSERVATION_DATE", "META_OBSERVATION_TIME"),
-    ]
+]
+
 
 def get_exptime(match_dict):
     """Given a `match_dict` dictionary of matching parameters for one match path,
@@ -157,7 +166,9 @@ def get_exptime(match_dict):
         log.verbose("matches.exp_time:  no exptime value found. returning worst case 1900-01-01 00:00:00.")
         return "1900-01-01 00:00:00"
 
+
 # ===================================================================
+
 
 class MatchesScript(cmdline.ContextsScript):
     """Command line script for printing reference selection criteria."""
@@ -205,29 +216,58 @@ jwst_niriss_saturation_0005.fits :  META.INSTRUMENT.DETECTOR='NIS'
 jwst_niriss_superbias_0003.fits :  META.INSTRUMENT.DETECTOR='NIS' META.EXPOSURE.READPATT='*' META.SUBARRAY.NAME='N/A'
 jwst_niriss_throughput_0008.fits :  META.INSTRUMENT.FILTER='F480M'
 """
-    
+
     def add_args(self):
         super(MatchesScript, self).add_args()
-        self.add_argument("--files", nargs="+", default=(),
-            help="References for which to dump selection criteria.")
-        self.add_argument("--files-from-contexts", action="store_true",
-            help="Operate on all references referred to by the context parameters.")
-        self.add_argument("--filters", nargs="+", default=(), 
-            help="Parameter constraints (key=value) which references matching on `key` must satisfy.  Unused parameters for a reference type are ignored.")
-        self.add_argument("-b", "--brief-paths", action="store_true",
-            help="Don't show the instrument and filekind clutter if already in filename.")
-        self.add_argument("-o", "--omit-parameter-names", action="store_true",
-            help="Hide the parameter names of the selection criteria,  just show the values.")
-        self.add_argument("-t", "--tuple-format", action="store_true",
-            help="Print the match info as Python tuples.")
-        self.add_argument("-d", "--datasets", nargs="+",
-            help="Dataset ids for which to dump matching parameters from DADSOPS or equivalent database.")
-        self.add_argument("-i", "--instrument", type=str,
-            help="Instrument for which to dump matching parameters from DADSOPS or equivalent database.")
-        self.add_argument("-c", "--condition-values", action="store_true",
-            help="When dumping dataset parameters, first apply CRDS value conditioning / normalization.")
-        self.add_argument("-m", "--minimize-headers", action="store_true",
-            help="When dumping dataset parameters,  limit them to matching parameters, excluding e.g. historical bestrefs.")
+        self.add_argument("--files", nargs="+", default=(), help="References for which to dump selection criteria.")
+        self.add_argument(
+            "--files-from-contexts",
+            action="store_true",
+            help="Operate on all references referred to by the context parameters.",
+        )
+        self.add_argument(
+            "--filters",
+            nargs="+",
+            default=(),
+            help="Parameter constraints (key=value) which references matching on `key` must satisfy.  Unused parameters for a reference type are ignored.",
+        )
+        self.add_argument(
+            "-b",
+            "--brief-paths",
+            action="store_true",
+            help="Don't show the instrument and filekind clutter if already in filename.",
+        )
+        self.add_argument(
+            "-o",
+            "--omit-parameter-names",
+            action="store_true",
+            help="Hide the parameter names of the selection criteria,  just show the values.",
+        )
+        self.add_argument("-t", "--tuple-format", action="store_true", help="Print the match info as Python tuples.")
+        self.add_argument(
+            "-d",
+            "--datasets",
+            nargs="+",
+            help="Dataset ids for which to dump matching parameters from DADSOPS or equivalent database.",
+        )
+        self.add_argument(
+            "-i",
+            "--instrument",
+            type=str,
+            help="Instrument for which to dump matching parameters from DADSOPS or equivalent database.",
+        )
+        self.add_argument(
+            "-c",
+            "--condition-values",
+            action="store_true",
+            help="When dumping dataset parameters, first apply CRDS value conditioning / normalization.",
+        )
+        self.add_argument(
+            "-m",
+            "--minimize-headers",
+            action="store_true",
+            help="When dumping dataset parameters,  limit them to matching parameters, excluding e.g. historical bestrefs.",
+        )
 
     def main(self):
         """Process command line parameters in to a context and list of
@@ -240,7 +280,9 @@ jwst_niriss_throughput_0008.fits :  META.INSTRUMENT.FILTER='F480M'
             self.dump_dataset_headers()
         else:
             self.print_help()
-            log.error("Specify --files to dump reference match cases or --datasets to dump dataset matching parameters.")
+            log.error(
+                "Specify --files to dump reference match cases or --datasets to dump dataset matching parameters."
+            )
         return log.errors()
 
     @property
@@ -290,7 +332,7 @@ jwst_niriss_throughput_0008.fits :  META.INSTRUMENT.FILTER='F480M'
     def dump_match_tuples(self, context):
         """Print out the match tuples for `references` under `context`.
         """
-        ctx = context if len(self.contexts) > 1 else ""  
+        ctx = context if len(self.contexts) > 1 else ""
         for ref in self.matched_files:
             matches = self.find_match_tuples(context, ref)
             if matches:
@@ -314,10 +356,10 @@ jwst_niriss_throughput_0008.fits :  META.INSTRUMENT.FILTER='F480M'
                 if prefix:
                     match_tuple = prefix + match_tuple
             else:
-                match_tuple = prefix + " " + " ".join(match_tuple)    
+                match_tuple = prefix + " " + " ".join(match_tuple)
             result.append(match_tuple)
         return result
-    
+
     def is_filtered(self, path):
         """Return True is `path` meets all matching parameter constraints specified by --filters, 
         otherwise False.
@@ -326,11 +368,10 @@ jwst_niriss_throughput_0008.fits :  META.INSTRUMENT.FILTER='F480M'
             key, value = (item.strip() for item in filter.split("="))
             for section in path[1:]:
                 for tup in section:
-                    if (tup[0].upper() == key.upper() and 
-                        value.upper() not in selectors.glob_list(tup[1].upper())):
+                    if tup[0].upper() == key.upper() and value.upper() not in selectors.glob_list(tup[1].upper()):
                         return True
         return False
-                        
+
     def format_prefix(self, path):
         """Return any representation of observatory, instrument, and filekind."""
         if not self.args.brief_paths:
@@ -340,7 +381,7 @@ jwst_niriss_throughput_0008.fits :  META.INSTRUMENT.FILTER='F480M'
                 prefix = " ".join(tup[1].upper() for tup in path[1:])
         else:
             prefix = ""
-        return prefix 
+        return prefix
 
     def format_match_tup(self, tup):
         """Return the representation of the selection criteria."""
@@ -349,6 +390,7 @@ jwst_niriss_throughput_0008.fits :  META.INSTRUMENT.FILTER='F480M'
         else:
             tup = tup[0], repr(tup[1])
             return "=".join(tup if not self.args.omit_parameter_names else tup[1:])
-        
+
+
 if __name__ == "__main__":
-   sys.exit(MatchesScript()())
+    sys.exit(MatchesScript()())

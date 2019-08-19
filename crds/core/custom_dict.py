@@ -11,19 +11,20 @@ from collections.abc import MutableMapping
 
 # =============================================================================
 
+
 class TransformedDict(MutableMapping):
 
     """A dictionary that applies an arbitrary key and value altering functions
     before accessing the keys and values.
     """
-    
+
     def __init__(self, initializer=()):
         self._contents = dict()
         self.update(dict(initializer))
 
     def __getstate__(self):
-        return dict(_contents = self._contents)
-    
+        return dict(_contents=self._contents)
+
     def __setstate__(self, state):
         self._contents = state["_contents"]
 
@@ -56,7 +57,7 @@ class TransformedDict(MutableMapping):
             return self[key]
         except KeyError:
             return default
-    
+
     def __repr__(self):
         """
         >>> TransformedDict([("this","THAT"), ("ANOTHER", "(ESCAPED)")])
@@ -64,7 +65,9 @@ class TransformedDict(MutableMapping):
         """
         return self.__class__.__name__ + "({})".format(sorted(list(self.items())))
 
+
 # =============================================================================
+
 
 class LazyFileDict(TransformedDict):
     """Instantiates a graph of inter-referencing files (like CRDS Mappings) on
@@ -81,7 +84,7 @@ class LazyFileDict(TransformedDict):
     and kept as literals,  e.g. N/A 
     """
 
-    special_values_set = set()   # Override in sub-classes as needed
+    special_values_set = set()  # Override in sub-classes as needed
 
     def __init__(self, selector, load_keys):
         assert "loader" in load_keys
@@ -97,10 +100,10 @@ class LazyFileDict(TransformedDict):
     def __getstate__(self):
         """Drop dictionary attributes which correspond to loaded/cached members."""
         return dict(
-            _xx_load_keys = self._xx_load_keys,
-            _xx_selector = self._xx_selector,
-            _xx_superclass = super(LazyFileDict, self).__getstate__()
-            )
+            _xx_load_keys=self._xx_load_keys,
+            _xx_selector=self._xx_selector,
+            _xx_superclass=super(LazyFileDict, self).__getstate__(),
+        )
 
     def __setstate__(self, state):
         """Drop dictionary attributes which correspond to loaded/cached members."""
@@ -114,7 +117,7 @@ class LazyFileDict(TransformedDict):
         a literal.
         """
         return isinstance(value, str) and value in cls.special_values_set
-        
+
     def __getitem__(self, name):
         name = self.transform_key(name)
         if name in self._xx_selector:
@@ -164,7 +167,7 @@ class LazyFileDict(TransformedDict):
         
         NOTE:  Does not require full load.
         """
-        return sorted([key for key in self.keys() if self.is_special_value(self._xx_selector[key]) ]) 
+        return sorted([key for key in self.keys() if self.is_special_value(self._xx_selector[key])])
 
     def values(self):
         """Return all the values of this LazyFileDict,  implicitly loading them all.
@@ -201,12 +204,18 @@ class LazyFileDict(TransformedDict):
     def special_items(self):
         """Return only those items that have exempt literal values with no recursive loading."""
         return self._items(self.special_keys())
-    
+
     def _items(self, keys):
         """Constructs item list taken from self based on `keys`."""
         return [(key, self[key]) for key in sorted(keys)]
 
     def __repr__(self):
         """Override __repr__ to prevent forced load of all selector items just for __repr__."""
-        return self.__class__.__name__ + "(" + repr(sorted(self._xx_selector.items())) + \
-            ", " + repr(sorted(self._xx_load_keys.items())) + ")"
+        return (
+            self.__class__.__name__
+            + "("
+            + repr(sorted(self._xx_selector.items()))
+            + ", "
+            + repr(sorted(self._xx_load_keys.items()))
+            + ")"
+        )

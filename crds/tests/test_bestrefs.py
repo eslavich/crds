@@ -90,6 +90,7 @@ one reference type was recommended.   This is essentially a list of files to be 
     j8bt09jcq_raw.fits
 """
 
+
 def dt_bestrefs_3_files():
     """
     Compute simple bestrefs for 3 files:
@@ -109,6 +110,7 @@ def dt_bestrefs_3_files():
     
     >>> test_config.cleanup(old_state)
     """
+
 
 def dt_bestrefs_compare_source_files():
     """
@@ -147,6 +149,7 @@ def dt_bestrefs_compare_source_files():
     >>> test_config.cleanup(old_state)
     """
 
+
 def dt_bestrefs_3_files_default_context_from_server():
     """
     Compute simple bestrefs for 3 files using the default context from the server:
@@ -166,6 +169,7 @@ def dt_bestrefs_3_files_default_context_from_server():
 
     >>> test_config.cleanup(old_state)
     """
+
 
 def dt_bestrefs_broken_dataset_file():
     """
@@ -189,6 +193,7 @@ def dt_bestrefs_broken_dataset_file():
     >>> test_config.cleanup(old_state)
     """
 
+
 def dt_bestrefs_broken_cache_and_server():
     """
     
@@ -203,6 +208,7 @@ def dt_bestrefs_broken_cache_and_server():
 
 >>> test_config.cleanup(old_state)
     """
+
 
 def dt_bestrefs_catalog_dataset():
     """
@@ -229,7 +235,8 @@ def dt_bestrefs_catalog_dataset():
     in the modified rmap should be header changes,  nominally the rmap_relevance expression;  additional changes
     may reflect new flshfile submissions which happened after the prototype rmap was created.
     """
-    
+
+
 def dt_bestrefs_context_to_context():
     """
     Compute comparison bestrefs between two contexts:
@@ -248,6 +255,7 @@ def dt_bestrefs_context_to_context():
     
     >>> test_config.cleanup(old_state)
     """
+
 
 def dt_bestrefs_all_instruments_hst():
     """
@@ -273,6 +281,7 @@ def dt_bestrefs_all_instruments_hst():
     >>> test_config.cleanup(old_state)
     """
 
+
 def dt_bestrefs_datasets_since_auto_hst():
     """
     Compute comparison bestrefs between two contexts:
@@ -291,6 +300,7 @@ def dt_bestrefs_datasets_since_auto_hst():
     >>> test_config.cleanup(old_state)
     """
 
+
 def dt_bestrefs_dataset_drop_ids():
     """
     >>> old_state = test_config.setup()
@@ -302,6 +312,7 @@ def dt_bestrefs_dataset_drop_ids():
     >>> test_config.cleanup(old_state)
     """
 
+
 def dt_bestrefs_dataset_only_ids():
     """
     >>> old_state = test_config.setup()
@@ -312,6 +323,7 @@ def dt_bestrefs_dataset_only_ids():
     True
     >>> test_config.cleanup(old_state)
     """
+
 
 def dt_bestrefs_compare_source_canary():
     """
@@ -327,7 +339,8 @@ def dt_bestrefs_compare_source_canary():
     2
     >>> test_config.cleanup(old_state)
     """
-    
+
+
 def dt_bestrefs_multiple_updates_with_error():
     """
     >>> old_state = test_config.setup()
@@ -370,6 +383,7 @@ def dt_bestrefs_multiple_updates_with_error():
     >>> test_config.cleanup(old_state)
     """
 
+
 def dt_test_cleanpath():
     """
     Removes prefixes added to reference files prior to writing into FITS headers.
@@ -391,6 +405,7 @@ def dt_test_cleanpath():
     'something/foo.fits'
     """
 
+
 def dt_test_hst_tobs_header_to_reftypes():
     """
     >>> from crds.hst.locate import header_to_reftypes
@@ -400,6 +415,7 @@ def dt_test_hst_tobs_header_to_reftypes():
     >>> header_to_reftypes({}, "tobs.pmap")
     []
     """
+
 
 def dt_test_jwst_header_to_reftypes():
     """
@@ -419,73 +435,93 @@ def dt_test_jwst_header_to_reftypes():
     ['area', 'camera', 'collimator', 'dark', 'disperser', 'distortion', 'filteroffset', 'fore', 'fpa', 'gain', 'ifufore', 'ifupost', 'ifuslicer', 'ipc', 'linearity', 'mask', 'msa', 'ote', 'photom', 'readnoise', 'refpix', 'regions', 'rscd', 'saturation', 'specwcs', 'superbias', 'v2v3', 'wavelengthrange']
     """
 
+
 class TestBestrefs(test_config.CRDSTestCase):
-    
+
     script_class = BestrefsScript
     # server_url = "https://hst-crds-dev.stsci.edu"
     cache = test_config.CRDS_TESTING_CACHE
 
     def test_bestrefs_affected_datasets(self):
-        self.run_script("crds.bestrefs --affected-datasets --old-context hst_0543.pmap --new-context hst_0544.pmap --datasets-since 2017-06-01",
-                        expected_errs=0)
-        
+        self.run_script(
+            "crds.bestrefs --affected-datasets --old-context hst_0543.pmap --new-context hst_0544.pmap --datasets-since 2017-06-01",
+            expected_errs=0,
+        )
+
     def test_bestrefs_from_pickle(self):
-        self.run_script("crds.bestrefs --new-context hst_0315.pmap --load-pickle data/test_cos.pkl --stats --print-affected-details",
-                        expected_errs=0)
-        
+        self.run_script(
+            "crds.bestrefs --new-context hst_0315.pmap --load-pickle data/test_cos.pkl --stats --print-affected-details",
+            expected_errs=0,
+        )
+
     def test_bestrefs_to_pickle(self):
-        self.run_script("crds.bestrefs --datasets LA9K03C3Q:LA9K03C3Q LA9K03C5Q:LA9K03C5Q LA9K03C7Q:LA9K03C7Q "
-                        "--new-context hst_0315.pmap --save-pickle test_cos.pkl --stats",
-                        expected_errs=0)
+        self.run_script(
+            "crds.bestrefs --datasets LA9K03C3Q:LA9K03C3Q LA9K03C5Q:LA9K03C5Q LA9K03C7Q:LA9K03C7Q "
+            "--new-context hst_0315.pmap --save-pickle test_cos.pkl --stats",
+            expected_errs=0,
+        )
         os.remove("test_cos.pkl")
-        
+
     def test_bestrefs_from_json(self):
-        self.run_script("crds.bestrefs --new-context hst_0315.pmap --load-pickle data/test_cos.json --stats",
-                        expected_errs=1)
+        self.run_script(
+            "crds.bestrefs --new-context hst_0315.pmap --load-pickle data/test_cos.json --stats", expected_errs=1
+        )
 
     def test_bestrefs_to_json(self):
-        self.run_script("crds.bestrefs --instrument cos --new-context hst_0315.pmap --save-pickle test_cos.json --datasets-since 2015-01-01 --stats",
-                        expected_errs=None)
+        self.run_script(
+            "crds.bestrefs --instrument cos --new-context hst_0315.pmap --save-pickle test_cos.json --datasets-since 2015-01-01 --stats",
+            expected_errs=None,
+        )
         os.remove("test_cos.json")
 
     def test_bestrefs_at_file(self):
-        self.run_script("crds.bestrefs --files @data/bestrefs_file_list  --new-context hst_0315.pmap --stats",
-                        expected_errs=0)
-        
+        self.run_script(
+            "crds.bestrefs --files @data/bestrefs_file_list  --new-context hst_0315.pmap --stats", expected_errs=0
+        )
+
     def test_bestrefs_remote(self):
-        self.run_script("crds.bestrefs --files @data/bestrefs_file_list  --new-context hst_0315.pmap --remote --stats",
-                        expected_errs=0)
-        
+        self.run_script(
+            "crds.bestrefs --files @data/bestrefs_file_list  --new-context hst_0315.pmap --remote --stats",
+            expected_errs=0,
+        )
+
     def test_bestrefs_new_references(self):
-        self.run_script("crds.bestrefs --files @data/bestrefs_file_list  --new-context hst_0315.pmap --print-new-references --stats",
-                        expected_errs=0)
+        self.run_script(
+            "crds.bestrefs --files @data/bestrefs_file_list  --new-context hst_0315.pmap --print-new-references --stats",
+            expected_errs=0,
+        )
 
     def test_bestrefs_default_new_context(self):
-        self.run_script("crds.bestrefs --files @data/bestrefs_file_list  --stats",
-                        expected_errs=0)
+        self.run_script("crds.bestrefs --files @data/bestrefs_file_list  --stats", expected_errs=0)
 
     def test_bestrefs_update_file_headers(self):
         shutil.copy("data/j8bt06o6q_raw.fits", "j8bt06o6q_raw.fits")
-        self.run_script("crds.bestrefs --files ./j8bt06o6q_raw.fits --new-context hst_0315.pmap --update-bestrefs",
-                       expected_errs=0)
+        self.run_script(
+            "crds.bestrefs --files ./j8bt06o6q_raw.fits --new-context hst_0315.pmap --update-bestrefs", expected_errs=0
+        )
         os.remove("j8bt06o6q_raw.fits")
 
     def test_bestrefs_update_bestrefs(self):
         # """update_bestrefs modifies dataset file headers"""
         shutil.copy("data/j8bt06o6q_raw.fits", "j8bt06o6q_raw.fits")
-        self.run_script("crds.bestrefs --files ./j8bt06o6q_raw.fits --new-context hst_0315.pmap --update-bestrefs",
-                       expected_errs=0)
+        self.run_script(
+            "crds.bestrefs --files ./j8bt06o6q_raw.fits --new-context hst_0315.pmap --update-bestrefs", expected_errs=0
+        )
         os.remove("j8bt06o6q_raw.fits")
 
     def test_bestrefs_bad_sources(self):
         with self.assertRaises(AssertionError):
-            self.run_script("crds.bestrefs --all-instruments --instrument cos --new-context hst_0315.pmap",
-                            expected_errs=1)
+            self.run_script(
+                "crds.bestrefs --all-instruments --instrument cos --new-context hst_0315.pmap", expected_errs=1
+            )
 
     def test_bestrefs_update_headers(self):
         # """update_headers updates original headers from a pickle saving a new pickle withn orginal + overrides."""
-        self.run_script("crds.bestrefs --new-context hst_0315.pmap --datasets LCE31SW6Q:LCE31SW6Q --load-pickle data/test_cos_update.json "
-                        " --save-pickle ./test_cos_combined.json --update-bestrefs --update-pickle", expected_errs=1)
+        self.run_script(
+            "crds.bestrefs --new-context hst_0315.pmap --datasets LCE31SW6Q:LCE31SW6Q --load-pickle data/test_cos_update.json "
+            " --save-pickle ./test_cos_combined.json --update-bestrefs --update-pickle",
+            expected_errs=1,
+        )
         with open("./test_cos_combined.json") as pfile:
             header = json.load(pfile)
         header = header["LCE31SW6Q:LCE31SW6Q"]
@@ -493,7 +529,7 @@ class TestBestrefs(test_config.CRDSTestCase):
         self.assertEqual(badttab, "N/A")
         gsagtab = header["GSAGTAB"]
         self.assertEqual(gsagtab, "X6L1439EL_GSAG.FITS")
-        flatfile = header["FLATFILE"] 
+        flatfile = header["FLATFILE"]
         self.assertEqual(flatfile, "N/A")
         os.remove("./test_cos_combined.json")
 
@@ -503,21 +539,24 @@ class TestBestrefs(test_config.CRDSTestCase):
 
         errors = assign_bestrefs([test_copy], context="hst_0500.pmap")
         self.assertEqual(errors, 0)
-        
+
         os.remove(test_copy)
-    
+
 
 # ==================================================================================
+
 
 def main():
     """Run module tests,  for now just doctests only."""
     import unittest
+
     suite = unittest.TestLoader().loadTestsFromTestCase(TestBestrefs)
     unittest.TextTestRunner().run(suite)
 
     from crds.tests import test_bestrefs, tstmod
+
     return tstmod(test_bestrefs)
+
 
 if __name__ == "__main__":
     print(main())
-

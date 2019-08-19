@@ -1,8 +1,8 @@
-'''
+"""
 Created on Feb 15, 2017
 
 @author: jmiller
-'''
+"""
 import json
 
 # ============================================================================
@@ -13,8 +13,9 @@ from .abstract import AbstractFile
 
 # ============================================================================
 
+
 class JsonFile(AbstractFile):
-    
+
     format = "JSON"
 
     def get_raw_header(self, needed_keys=(), **keys):
@@ -23,9 +24,6 @@ class JsonFile(AbstractFile):
             try:
                 header = json.load(pfile)
             except ValueError as exc:
-                raise exceptions.JsonFormatError(
-                    "JSON wouldn't load from", repr(self.filepath), ":", str(exc))
+                raise exceptions.JsonFormatError("JSON wouldn't load from", repr(self.filepath), ":", str(exc))
             header = self.to_simple_types(header)
         return header
-
-

@@ -1,4 +1,4 @@
-#========================================================================
+# ========================================================================
 #
 # module: siname
 #
@@ -16,33 +16,39 @@
 # 10/23/03 49468 MSwam    activate COS,WFC3 in CDBS
 # 10/22/12  Todd Miller   hacked into CRDS
 #
-#========================================================================
+# ========================================================================
 import re
 
 # exceptions
 class UnknownInstrument(Exception):
-  pass
+    pass
+
 
 class UnknownIRAFPrefix(Exception):
-  pass
+    pass
+
 
 class UnknownRefDataPrefix(Exception):
-  pass
+    pass
+
 
 class UnsupportedCDBSInstrument(Exception):
-  pass
+    pass
+
 
 class UnknownCDBSPrefix(Exception):
-  pass
+    pass
+
 
 # global compiled regex for splitting filenames
 filesplit = re.compile("[_\.]")
 
 # post-SM2 instruments supported by CDBS
-CDBS_supports = ("ACS","STIS","NICMOS","WFPC2","WFC3","COS")
+CDBS_supports = ("ACS", "STIS", "NICMOS", "WFPC2", "WFC3", "COS")
+
 
 def WhichInstrument(dataset):
-   """
+    """
 =======================================================================
 Name: WhichInstrument
 
@@ -61,30 +67,23 @@ History:
 10/01/02 xxxxx MSwam     Initial version
 =======================================================================
    """
-   try:
-     return ID_CHAR_TO_INSTRUMENT[dataset[0].lower()]
-   except:
-     raise UnknownInstrument
+    try:
+        return ID_CHAR_TO_INSTRUMENT[dataset[0].lower()]
+    except:
+        raise UnknownInstrument
 
-ID_CHAR_TO_INSTRUMENT = {
-  "j" : "ACS",
-  "o": "STIS",
-  "n": "NICMOS",
-  "u": "WFPC2",
-  "i": "WFC3",
-  "l": "COS",
-  "m" : "SYNPHOT",
-  }
 
-INSTRUMENT_TO_ID_CHAR = { 
-  val: key for (key, val) in ID_CHAR_TO_INSTRUMENT.items() 
-}
+ID_CHAR_TO_INSTRUMENT = {"j": "ACS", "o": "STIS", "n": "NICMOS", "u": "WFPC2", "i": "WFC3", "l": "COS", "m": "SYNPHOT"}
+
+INSTRUMENT_TO_ID_CHAR = {val: key for (key, val) in ID_CHAR_TO_INSTRUMENT.items()}
+
 
 def instrument_to_id_char(instrument):
-  """Given an instrument name (e.g. acs) return the corresponding CDBS
+    """Given an instrument name (e.g. acs) return the corresponding CDBS
   instrument id character.
   """
-  return INSTRUMENT_TO_ID_CHAR[instrument.upper()] 
+    return INSTRUMENT_TO_ID_CHAR[instrument.upper()]
+
 
 def add_IRAF_prefix(instrument_name):
     """
@@ -113,26 +112,27 @@ History:
 04/12/04 48141 MSwam     Add MULTI, SYNPHOT
 =======================================================================
    """
-    if (instrument_name == "ACS"):
-      iraf_prefix = "jref$"
-    elif (instrument_name == "STIS"):
-      iraf_prefix = "oref$"
-    elif (instrument_name == "NICMOS"):
-      iraf_prefix = "nref$"
-    elif (instrument_name == "WFPC2"):
-      iraf_prefix = "uref$"
-    elif (instrument_name == "WFC3"):
-      iraf_prefix = "iref$"
-    elif (instrument_name == "COS"):
-      iraf_prefix = "lref$"
-    elif (instrument_name == "MULTI"):
-      iraf_prefix = "mtab$"
-    elif (instrument_name == "SYNPHOT"):
-      iraf_prefix = "ttab$"
+    if instrument_name == "ACS":
+        iraf_prefix = "jref$"
+    elif instrument_name == "STIS":
+        iraf_prefix = "oref$"
+    elif instrument_name == "NICMOS":
+        iraf_prefix = "nref$"
+    elif instrument_name == "WFPC2":
+        iraf_prefix = "uref$"
+    elif instrument_name == "WFC3":
+        iraf_prefix = "iref$"
+    elif instrument_name == "COS":
+        iraf_prefix = "lref$"
+    elif instrument_name == "MULTI":
+        iraf_prefix = "mtab$"
+    elif instrument_name == "SYNPHOT":
+        iraf_prefix = "ttab$"
     else:
-      raise UnknownIRAFPrefix
+        raise UnknownIRAFPrefix
     #
     return iraf_prefix
+
 
 def get_ref_data_prefix(instrument_name):
     """
@@ -164,23 +164,24 @@ History:
 11/01/07 56836 Sherbert  Add WF3 and COS now that tables exist
 =======================================================================
    """
-    if (instrument_name == "ACS"):
-      return "acr"
-    elif (instrument_name == "STIS"):
-      return "ssr"
-    elif (instrument_name == "NICMOS"):
-      return "nsr"
-    elif (instrument_name == "WFPC2"):
-      return "w2r"
-    elif (instrument_name == "COS"):
-      return "csr"
-    elif (instrument_name == "WFC3"):
-      return "w3r"
+    if instrument_name == "ACS":
+        return "acr"
+    elif instrument_name == "STIS":
+        return "ssr"
+    elif instrument_name == "NICMOS":
+        return "nsr"
+    elif instrument_name == "WFPC2":
+        return "w2r"
+    elif instrument_name == "COS":
+        return "csr"
+    elif instrument_name == "WFC3":
+        return "w3r"
     else:
-      raise UnknownRefDataPrefix
+        raise UnknownRefDataPrefix
+
 
 def supported_by_CDBS(instrument_name):
-  """
+    """
 =======================================================================
 Name: supported_by_CDBS
 
@@ -201,8 +202,9 @@ History:
 10/01/02 xxxxx MSwam     Initial version
 =======================================================================
   """
-  if not instrument_name in CDBS_supports:
-    raise UnsupportedCDBSInstrument
+    if not instrument_name in CDBS_supports:
+        raise UnsupportedCDBSInstrument
+
 
 def get_cdbs_prefix(instrument_name):
     """
@@ -232,14 +234,15 @@ History:
 =======================================================================
    """
     if instrument_name in CDBS_supports:
-      return instrument_name.lower()
-    elif (instrument_name == "SYNPHOT" or instrument_name == "MULTI"):
-      return "synphot"
+        return instrument_name.lower()
+    elif instrument_name == "SYNPHOT" or instrument_name == "MULTI":
+        return "synphot"
     else:
-      raise UnknownCDBSPrefix
+        raise UnknownCDBSPrefix
+
 
 def WhichCDBSInstrument(reffilename):
-   """
+    """
 =======================================================================
 Name: WhichCDBSInstrument
 
@@ -264,18 +267,17 @@ History:
 05/14/08 59478 MSwam     Add th (thermal) synphot type as well
 =======================================================================
    """
-   # split the filename into pieces on field delimiters
-   parts = re.split(filesplit,reffilename)
+    # split the filename into pieces on field delimiters
+    parts = re.split(filesplit, reffilename)
 
-   # first test for a synphot or thermal file (check the last two pieces)
-   pos = len(parts) - 2
-   if pos > 0 and parts[pos].lower() in ["syn", "th"]:
-      return "SYNPHOT"
-   pos += 1
-   if pos > 0 and parts[pos].lower() in ["syn", "th"]:
-      return "SYNPHOT"
-   try:
-     return ID_CHAR_TO_INSTRUMENT[parts[0][-1:].lower()]
-   except:
-      raise UnknownInstrument
-
+    # first test for a synphot or thermal file (check the last two pieces)
+    pos = len(parts) - 2
+    if pos > 0 and parts[pos].lower() in ["syn", "th"]:
+        return "SYNPHOT"
+    pos += 1
+    if pos > 0 and parts[pos].lower() in ["syn", "th"]:
+        return "SYNPHOT"
+    try:
+        return ID_CHAR_TO_INSTRUMENT[parts[0][-1:].lower()]
+    except:
+        raise UnknownInstrument

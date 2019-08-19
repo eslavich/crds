@@ -6,7 +6,7 @@ import os
 import os.path
 import re
 import glob
-import getpass 
+import getpass
 import configparser
 
 # ===========================================================================
@@ -15,14 +15,17 @@ from crds.core import log, exceptions
 
 # ===========================================================================
 
+
 def _get_crds_ini_path():
     """Return the path to the CRDS rc file defining CRDS parameter settings."""
     default_rc = os.path.expanduser("~/.crds.ini")
     return os.environ.get("CRDS_INI_FILE", default_rc)
 
+
 # Re-reading and re-parsing the rc file is probably too slow not to cache.
 # Implement brute-force caching to avoid circular dependency with crds.utils
 CRDS_INI_PARSER = None
+
 
 def _get_crds_ini_parser():
     """Load and return the environment from the CRDS rc file."""
@@ -34,7 +37,9 @@ def _get_crds_ini_parser():
             if os.path.exists(ini_path):
                 mode = os.stat(ini_path).st_mode
                 if mode & 0o077:
-                    raise exceptions.CrdsWebAuthenticationError("You must 'chmod 0600 $HOME/.crds.ini' to make it secret.")
+                    raise exceptions.CrdsWebAuthenticationError(
+                        "You must 'chmod 0600 $HOME/.crds.ini' to make it secret."
+                    )
                 parser.read(ini_path)
                 CRDS_INI_PARSER = parser
             else:
@@ -42,6 +47,7 @@ def _get_crds_ini_parser():
     else:
         parser = CRDS_INI_PARSER
     return parser
+
 
 # Not caching this enables doing env overrides on-the-fly in os.environ,  including
 # the basic machinery of ConfigItem.set() which is a non-permanent set.
@@ -64,7 +70,9 @@ def get_crds_env_str(section, varname, default):
     result = os.environ.get(varname, ini_val)  # os.environ overrides ini file.
     return result if result is not None else default
 
+
 # ===========================================================================
+
 
 def env_to_bool(varname, default=False, section=None):
     """Convert the specified environment variable `varname` into a Python bool
@@ -72,6 +80,7 @@ def env_to_bool(varname, default=False, section=None):
     """
     env_str = get_crds_env_str(section, varname, default)
     return env_str_to_bool(varname, env_str)
+
 
 def env_str_to_bool(varname, val):
     """Convert the boolean environment value string `val` to a Python bool
@@ -82,9 +91,9 @@ def env_str_to_bool(varname, val):
     elif val in ["True", "true", "TRUE", "T", "t", "1", True, 1]:
         rval = True
     else:
-        raise ValueError("Invalid value " +  repr(val) + 
-                         " for boolean env var " + repr(varname))
+        raise ValueError("Invalid value " + repr(val) + " for boolean env var " + repr(varname))
     return rval
+
 
 def env_to_int(varname, default, section=None):
     """Convert the specified environment variable `varname` into a Python int
@@ -93,15 +102,19 @@ def env_to_int(varname, default, section=None):
     env_str = get_crds_env_str(section, varname, default)
     return env_str_to_int(varname, env_str)
 
+
 def env_str_to_int(varname, val):
     """Convert environment variable decimal value `val` from `varname` to an int and return it."""
     try:
         return int(val)
     except Exception:
-        raise ValueError("Invalid value for " + repr(varname) + 
-                         " should have a decimal integer value but is " + repr(str(val)))
+        raise ValueError(
+            "Invalid value for " + repr(varname) + " should have a decimal integer value but is " + repr(str(val))
+        )
+
 
 # ===========================================================================
+
 
 class ConfigItem:
     """CRDS environment control item base class.  These are driven by environment variables
@@ -128,6 +141,7 @@ class ConfigItem:
     >>> os.environ["CRDS_CFG_ITEM"]
     '999'
     """
+
     def __init__(self, env_var, default, comment=None, valid_values=None, lower=False, ini_section=None):
         """Defines CRDS environment item named `env_var` which has the value `default` when not specified anywhere."""
         self.env_var = env_var  # for starters,  this IS an env var,  bu conceptually it is an identifier.
@@ -141,8 +155,14 @@ class ConfigItem:
     def check_value(self, value):
         """Verify that `value` is valid for this config item."""
         if self.valid_values:
-            assert value in self.valid_values, "Invalid value for " + repr(self.env_var) + " of " + repr(value)  + \
-                " is not one of " + repr(self.valid_values)
+            assert value in self.valid_values, (
+                "Invalid value for "
+                + repr(self.env_var)
+                + " of "
+                + repr(value)
+                + " is not one of "
+                + repr(self.valid_values)
+            )
         return value
 
     def get(self):
@@ -150,7 +170,7 @@ class ConfigItem:
         value = get_crds_env_str(self.ini_section, self.env_var, self.default)
         value = self._set(value)
         return value
-    
+
     def set(self, value):
         """Set the value of the control item,  for the sake of this runtime session only."""
         old = self.get()
@@ -164,11 +184,12 @@ class ConfigItem:
         self.check_value(value)
         os.environ[self.env_var] = str(value)
         return value
- 
+
     def reset(self):
         """Restore this variable to it's default value,  clearing any environment setting."""
         os.environ.pop(self.env_var, None)
-        
+
+
 class StrConfigItem(ConfigItem):
     """Config item for a string value,  currently no difference from base ConfigItem.
     
@@ -205,7 +226,7 @@ class StrConfigItem(ConfigItem):
     def __str__(self):
         """Return value of string config item."""
         return str(self.get())
-    
+
     def __hash__(self):
         """Use str() of StrConfigItem as hash()"""
         return hash(str(self))
@@ -213,14 +234,15 @@ class StrConfigItem(ConfigItem):
     def __eq__(self, other):
         """Test string value of config item for equality with `other`."""
         return str(self.get()) == other
-    
+
     def __add__(self, other):
         """Add string value of config item to following parameter `other`."""
         return str(self) + str(other)
-    
+
     def __radd__(self, other):
         """Add string value of config item to preceding parameter `other`."""
         return str(other) + str(self)
+
 
 class BooleanConfigItem(ConfigItem):
     """Represents a boolean environment setting for CRDS.
@@ -257,10 +279,10 @@ class BooleanConfigItem(ConfigItem):
     False
 
     """
+
     def __init__(self, var, default, *args, **keys):
         keys = dict(keys)
-        keys["valid_values"] = ["0", "1", "true", "false", "t", "f", "False", "True",
-                                False, True, 0, 1]
+        keys["valid_values"] = ["0", "1", "true", "false", "t", "f", "False", "True", False, True, 0, 1]
         keys["lower"] = True
         super(BooleanConfigItem, self).__init__(var, str(default), *args, **keys)
 
@@ -271,7 +293,7 @@ class BooleanConfigItem(ConfigItem):
     def set(self, val):
         """Set the bool value of this config item to `val`,  coercing to bool.  Return old value."""
         return super(BooleanConfigItem, self).set(str(env_str_to_bool(self.env_var, str(val))))
-    
+
     def __nonzero__(self):
         """Support using this boolean config item be used as a conditional expression."""
         return self.get()
@@ -306,6 +328,7 @@ class IntConfigItem(ConfigItem):
     >>> INT.get()
     42
     """
+
     def __init__(self, var, default, *args, **keys):
         keys = dict(keys)
         keys["valid_values"] = None
@@ -313,62 +336,82 @@ class IntConfigItem(ConfigItem):
 
     def get(self):
         """Return the bool value of this config item."""
-        return int(super(IntConfigItem,self).get())
+        return int(super(IntConfigItem, self).get())
 
     def set(self, val):
         """Set the bool value of this config item to `val`,  coercing to bool.  Return old value."""
         return super(IntConfigItem, self).set(str(int(val)))
 
-    def __nonzero__(self): 
+    def __nonzero__(self):
         """Support using this boolean config item be used as
         a conditional expression."""
         return self.get() != 0
 
+
 # ===========================================================================
 
-FITS_IGNORE_MISSING_END = BooleanConfigItem("CRDS_FITS_IGNORE_MISSING_END", False,
-    "When True, ignore missing END records in the FITS primary header.  Otherwise fail.")
+FITS_IGNORE_MISSING_END = BooleanConfigItem(
+    "CRDS_FITS_IGNORE_MISSING_END",
+    False,
+    "When True, ignore missing END records in the FITS primary header.  Otherwise fail.",
+)
 
-FITS_VERIFY_CHECKSUM = BooleanConfigItem("CRDS_FITS_VERIFY_CHECKSUM", True,
-    "When True, verify that FITS header CHECKSUM and DATASUM values are correct.  Otherwise fail.")
+FITS_VERIFY_CHECKSUM = BooleanConfigItem(
+    "CRDS_FITS_VERIFY_CHECKSUM",
+    True,
+    "When True, verify that FITS header CHECKSUM and DATASUM values are correct.  Otherwise fail.",
+)
 
-ADD_LOG_MSG_COUNTER = BooleanConfigItem(
-    "CRDS_ADD_LOG_MSG_COUNTER", False, "When True, add a running counter.")
+ADD_LOG_MSG_COUNTER = BooleanConfigItem("CRDS_ADD_LOG_MSG_COUNTER", False, "When True, add a running counter.")
 log.set_add_log_msg_count(ADD_LOG_MSG_COUNTER)
 
 # ===========================================================================
 
 # Runtime bad file options for end users
 
-ALLOW_BAD_REFERENCES  = BooleanConfigItem("CRDS_ALLOW_BAD_REFERENCES", False,
-    "When True, references which are designated as BAD (scientifically invalid) on the server can be used with warnings.")
+ALLOW_BAD_REFERENCES = BooleanConfigItem(
+    "CRDS_ALLOW_BAD_REFERENCES",
+    False,
+    "When True, references which are designated as BAD (scientifically invalid) on the server can be used with warnings.",
+)
 
-ALLOW_BAD_RULES = BooleanConfigItem("CRDS_ALLOW_BAD_RULES", False,
-    "When True, rules which are designated as BAD (scientifically invalid) on the server can be used with warnings.")
+ALLOW_BAD_RULES = BooleanConfigItem(
+    "CRDS_ALLOW_BAD_RULES",
+    False,
+    "When True, rules which are designated as BAD (scientifically invalid) on the server can be used with warnings.",
+)
 
 # ===========================================================================
 
 # Refactoring options
 
-PASS_INVALID_VALUES = BooleanConfigItem("PASS_INVALID_VALUES", False,
-    "When True,  return invalid values detected by JWST calibrartion code data model schema. These are still be errors.")
+PASS_INVALID_VALUES = BooleanConfigItem(
+    "PASS_INVALID_VALUES",
+    False,
+    "When True,  return invalid values detected by JWST calibrartion code data model schema. These are still be errors.",
+)
 
-ALLOW_SCHEMA_VIOLATIONS = BooleanConfigItem("CRDS_ALLOW_SCHEMA_VIOLATIONS", False,
-    "When True, don't map JWST data model warnings onto CRDS errors.")
+ALLOW_SCHEMA_VIOLATIONS = BooleanConfigItem(
+    "CRDS_ALLOW_SCHEMA_VIOLATIONS", False, "When True, don't map JWST data model warnings onto CRDS errors."
+)
 
-ALLOW_BAD_PARKEY_VALUES = BooleanConfigItem("CRDS_ALLOW_BAD_PARKEY_VALUES", False,
-    "When True, turn off parkey value checking when loading rmaps.  For refactoring with bad 'legacy' references.")
+ALLOW_BAD_PARKEY_VALUES = BooleanConfigItem(
+    "CRDS_ALLOW_BAD_PARKEY_VALUES",
+    False,
+    "When True, turn off parkey value checking when loading rmaps.  For refactoring with bad 'legacy' references.",
+)
 
-ALLOW_BAD_USEAFTER = BooleanConfigItem("CRDS_ALLOW_BAD_USEAFTER", False,
-    "When True,  when USEAFTER won't parse,  fake it as the primal default.")
+ALLOW_BAD_USEAFTER = BooleanConfigItem(
+    "CRDS_ALLOW_BAD_USEAFTER", False, "When True,  when USEAFTER won't parse,  fake it as the primal default."
+)
 
 # ============================================================================
 
-CRDS_DATA_CHUNK_SIZE = 2**23   
+CRDS_DATA_CHUNK_SIZE = 2 ** 23
 #   IntConfigItem("CRDS_DATA_CHUNK_SIZE", 2**23,
-#   "File download transfer block size, 8M.  HTTP mode only.")   
+#   "File download transfer block size, 8M.  HTTP mode only.")
 
-CRDS_CHECKSUM_BLOCK_SIZE = 2**23
+CRDS_CHECKSUM_BLOCK_SIZE = 2 ** 23
 
 # IntConfigItem("CRDS_CHECKSUM_BLOCK_SIZE", 2**23,
 #    "Size of data read into memory at once for utils.checksum.")
@@ -381,6 +424,7 @@ CRDS_CHECKSUM_BLOCK_SIZE = 2**23
 # CRDS is to use CRDS_PATH and related settings.
 CRDS_DEFAULT_CACHE = os.environ.get("CRDS_DEFAULT_CACHE", "/grp/crds/cache")
 
+
 def _clean_path(path):
     """Fetch `name` from the environment,  or use `default`.  Trim trailing /'s from
     the resulting path.
@@ -388,6 +432,7 @@ def _clean_path(path):
     while path.endswith("/"):
         path = path[:-1]
     return path
+
 
 def _std_cache_path(observatory, root_env, subdir):
     """Do standard interpretation of environment variables for CRDS cache component location.
@@ -412,7 +457,8 @@ def _std_cache_path(observatory, root_env, subdir):
     else:
         path = os.path.join(CRDS_DEFAULT_CACHE, subdir, observatory)
     return _clean_path(path)
-    
+
+
 def get_crds_path():
     """
     >>> temp = dict(os.environ)
@@ -434,6 +480,7 @@ def get_crds_path():
     >>> os.environ = temp
     """
     return _std_cache_path("", "*not-in-crds-environment*", "")
+
 
 def get_crds_mappath(observatory):
     """get_crds_mappath() returns the base path of the CRDS mapping directory 
@@ -468,6 +515,7 @@ def get_crds_mappath(observatory):
     """
     return _std_cache_path(observatory, "CRDS_MAPPATH", "mappings")
 
+
 def get_crds_cfgpath(observatory):
     """Return the path to a writable directory used to store configuration info
     such as last known server status.   This is extended by <observatory> once
@@ -475,6 +523,7 @@ def get_crds_cfgpath(observatory):
     CRDS_CFGPATH should be defined.
     """
     return _std_cache_path(observatory, "CRDS_CFGPATH", "config")
+
 
 def get_crds_root_cfgpath():
     """Return the root multi-project config path. Used for e.g. lockfiles.
@@ -506,6 +555,7 @@ def get_crds_root_cfgpath():
     else:
         return dirname
 
+
 def get_crds_refpath(observatory):
     """get_crds_refpath returns the base path of the directory tree where CRDS 
     reference files are stored.   This is extended by <observatory> once it is
@@ -515,11 +565,13 @@ def get_crds_refpath(observatory):
     """
     return _std_cache_path(observatory, "CRDS_REFPATH", "references")
 
+
 def locate_config(cfg, observatory):
     """Return the absolute path where reference `cfg` should be located."""
     if os.path.dirname(cfg):
         return cfg
     return os.path.join(get_crds_cfgpath(observatory), cfg)
+
 
 def override_crds_paths(crds_path):
     """Overrides all CRDS PATH definition environment variables
@@ -531,13 +583,15 @@ def override_crds_paths(crds_path):
         if "CRDS_" in name and "PATH" in name:
             del os.environ[name]
     os.environ["CRDS_PATH"] = crds_path
-    
+
 
 # -------------------------------------------------------------------------------------
+
 
 def get_crds_picklepath(observatory):
     """Return the directory name where CRDS stores pickles for `observatory`."""
     return _std_cache_path(observatory, "CRDS_PICKLEPATH", "pickles")
+
 
 def locate_pickle(mapping, observatory=None):
     """Return the absolute path where reference `ref` should be located."""
@@ -547,30 +601,44 @@ def locate_pickle(mapping, observatory=None):
         observatory = mapping_to_observatory(mapping)
     return os.path.join(get_crds_picklepath(observatory), mapping + ".pkl")
 
-USE_PICKLED_CONTEXTS = BooleanConfigItem("CRDS_USE_PICKLED_CONTEXTS", False,
-    "When True,  CRDS contexts should be loaded from a pickled version if possible.")
 
-AUTO_PICKLE_CONTEXTS = BooleanConfigItem("CRDS_AUTO_PICKLE_CONTEXTS", False,
-    "When True, CRDS contexts should be automatically pickled and cached after loading.")
+USE_PICKLED_CONTEXTS = BooleanConfigItem(
+    "CRDS_USE_PICKLED_CONTEXTS", False, "When True,  CRDS contexts should be loaded from a pickled version if possible."
+)
+
+AUTO_PICKLE_CONTEXTS = BooleanConfigItem(
+    "CRDS_AUTO_PICKLE_CONTEXTS",
+    False,
+    "When True, CRDS contexts should be automatically pickled and cached after loading.",
+)
 
 # -------------------------------------------------------------------------------------
 
-FORCE_COMPLETE_LOAD = BooleanConfigItem("CRDS_FORCE_COMPLETE_LOAD", False,
-    "When True, force CRDS contexts to load in their entirety rather than based on what is actually used.")
+FORCE_COMPLETE_LOAD = BooleanConfigItem(
+    "CRDS_FORCE_COMPLETE_LOAD",
+    False,
+    "When True, force CRDS contexts to load in their entirety rather than based on what is actually used.",
+)
 
-EXPLICIT_GARBAGE_COLLECTION = BooleanConfigItem("CRDS_EXPLICIT_GARBAGE_COLLECTION", True,
-    "When False, the @gc_collected function decorator skips garbage collection.")
+EXPLICIT_GARBAGE_COLLECTION = BooleanConfigItem(
+    "CRDS_EXPLICIT_GARBAGE_COLLECTION",
+    True,
+    "When False, the @gc_collected function decorator skips garbage collection.",
+)
 # -------------------------------------------------------------------------------------
+
 
 def get_sqlite3_db_path(observatory):
     """Return the path to the downloadable CRDS catalog + history SQLite3 database file."""
     return locate_config("crds_db.sqlite3", observatory)
+
 
 # ===========================================================================
 
 CRDS_SUBDIR_TAG_FILE = "ref_cache_subdir_mode"
 CRDS_REF_SUBDIR_MODES = ["instrument", "flat", "legacy"]
 CRDS_REF_SUBDIR_MODE = "None"  # does not make cache consistent with env,  test only!!
+
 
 def get_crds_ref_subdir_mode(observatory):
     """Return the mode value defining how reference files are located."""
@@ -596,6 +664,7 @@ def get_crds_ref_subdir_mode(observatory):
         mode = CRDS_REF_SUBDIR_MODE
     return mode
 
+
 def set_crds_ref_subdir_mode(mode, observatory):
     """Set the reference file location subdirectory `mode`."""
     global CRDS_REF_SUBDIR_MODE
@@ -603,8 +672,10 @@ def set_crds_ref_subdir_mode(mode, observatory):
     CRDS_REF_SUBDIR_MODE = mode
     mode_path = get_crds_ref_subdir_file(observatory)
     if writable_cache_or_verbose("skipping subdir mode write."):
-        from crds.core import heavy_client as hv   #  yeah,  kinda gross
+        from crds.core import heavy_client as hv  #  yeah,  kinda gross
+
         hv.cache_atomic_write(mode_path, mode, "Couldn't save sub-directory mode config")
+
 
 def get_crds_ref_subdir_file(observatory):
     """Return path to CRDS config file defining cache organization.  Created 
@@ -613,19 +684,24 @@ def get_crds_ref_subdir_file(observatory):
     Returns <path to cache organization config file>
     """
     return os.path.join(get_crds_cfgpath(observatory), CRDS_SUBDIR_TAG_FILE)
-    
+
 
 def check_crds_ref_subdir_mode(mode):
     """Check for valid reference location subdirectory `mode`."""
     assert mode in CRDS_REF_SUBDIR_MODES, "Invalid CRDS cache subdirectory mode = " + repr(mode)
     return mode
 
+
 # ===========================================================================
 
-CRDS_MODE = StrConfigItem("CRDS_MODE", default="auto",
+CRDS_MODE = StrConfigItem(
+    "CRDS_MODE",
+    default="auto",
     comment="""Selects where bestrefs are performed, locally, remotely (on the CRDS server), 
     or automatically chosen by comparing client version to server version.""",
-    valid_values=["local", "remote", "auto"])
+    valid_values=["local", "remote", "auto"],
+)
+
 
 def get_crds_processing_mode():
     """Return the preferred location for computing best references when
@@ -637,9 +713,11 @@ def get_crds_processing_mode():
     """
     return CRDS_MODE.get()
 
+
 # ===============================================================================================
 
 # CRDS_CONTEXT = StrConfigItem("CRDS_CONTEXT", default=None)
+
 
 def get_crds_env_context():
     """If it has been specified in the environment by CRDS_CONTEXT,  return the 
@@ -660,22 +738,30 @@ def get_crds_env_context():
     """
     context = os.environ.get("CRDS_CONTEXT", None)
     if context:
-        assert is_context_spec(context), \
-            "Only set CRDS_CONTEXT to a literal or symbolic context (.pmap), e.g. jwst_0042.pmap,  jwst-2014-10-15T00:15:21, jwst-operational,  not " + repr(context)
+        assert is_context_spec(context), (
+            "Only set CRDS_CONTEXT to a literal or symbolic context (.pmap), e.g. jwst_0042.pmap,  jwst-2014-10-15T00:15:21, jwst-operational,  not "
+            + repr(context)
+        )
     return context
 
-CRDS_IGNORE_MAPPING_CHECKSUM = BooleanConfigItem("CRDS_IGNORE_MAPPING_CHECKSUM", False,
-    "disables mapping checksums during development.")
+
+CRDS_IGNORE_MAPPING_CHECKSUM = BooleanConfigItem(
+    "CRDS_IGNORE_MAPPING_CHECKSUM", False, "disables mapping checksums during development."
+)
+
 
 def get_ignore_checksum():
     """Returns environment override for disabling mapping checksums during development."""
     return env_to_bool("CRDS_IGNORE_MAPPING_CHECKSUM", False)
 
+
 def get_log_time():
     """Returns override flag for outputting time in log messages."""
     return env_to_bool("CRDS_LOG_TIME", False)
 
+
 # ===========================================================================
+
 
 def get_crds_env_vars():
     """Return a dictionary of all env vars starting with 'CRDS'."""
@@ -685,22 +771,29 @@ def get_crds_env_vars():
             env_vars[var] = os.environ[var]
     return env_vars
 
+
 def get_crds_actual_paths(observatory):
     """Return a dictionary of the critical paths CRDS configuration resolves to."""
     return {
-        "mapping root" : get_crds_mappath(observatory),
-        "reference root" : get_crds_refpath(observatory),
-        "config root" : get_crds_cfgpath(observatory),
-        "pickle root" : get_crds_picklepath(observatory),
-        }
+        "mapping root": get_crds_mappath(observatory),
+        "reference root": get_crds_refpath(observatory),
+        "config root": get_crds_cfgpath(observatory),
+        "pickle root": get_crds_picklepath(observatory),
+    }
+
 
 # ============================================================================
 
 # client API related settings.
 
-CRDS_DOWNLOAD_MODE = StrConfigItem("CRDS_DOWNLOAD_MODE", "http",
+CRDS_DOWNLOAD_MODE = StrConfigItem(
+    "CRDS_DOWNLOAD_MODE",
+    "http",
     "Selects the mode used by the CRDS client for downloading rules and references.",
-    ["http", "plugin"], lower=True)
+    ["http", "plugin"],
+    lower=True,
+)
+
 
 def get_download_mode():
     """Return the mode used to download references and mappings,  either normal
@@ -709,6 +802,7 @@ def get_download_mode():
     Returns "http" or "plugin"
     """
     return CRDS_DOWNLOAD_MODE.get()
+
 
 def get_download_plugin():
     """Fetch a command template from the environment to use a as a substitute for CRDS
@@ -726,58 +820,75 @@ def get_download_plugin():
                 return program + " --no-check-certificate --quiet ${SOURCE_URL}  -O ${OUTPUT_PATH}"
     return None
 
+
 DOWNLOAD_CHECKSUMS = BooleanConfigItem(
-    "CRDS_DOWNLOAD_CHECKSUMS", True, "Verify downloaded files match server's sha1sum.  If false,  allow bad checksums.")
-                        
+    "CRDS_DOWNLOAD_CHECKSUMS", True, "Verify downloaded files match server's sha1sum.  If false,  allow bad checksums."
+)
+
 DOWNLOAD_LENGTHS = BooleanConfigItem(
-    "CRDS_DOWNLOAD_LENGTHS", True, "Verify downloaded files match server's file length.  If false,  allow bad lengths.")
-                        
+    "CRDS_DOWNLOAD_LENGTHS", True, "Verify downloaded files match server's file length.  If false,  allow bad lengths."
+)
+
+
 def get_checksum_flag():
     """Return True if the environment is configured for checksums."""
     return DOWNLOAD_CHECKSUMS.get()
+
 
 def get_length_flag():
     """Return True if the environment is configured for verifying downloaded file lengths.
     """
     return DOWNLOAD_LENGTHS.get()
 
+
 CLIENT_RETRY_COUNT = IntConfigItem(
-    "CRDS_CLIENT_RETRY_COUNT", 1, "Integer number of times CRDS should retry download errors.  No retries == 1.")
+    "CRDS_CLIENT_RETRY_COUNT", 1, "Integer number of times CRDS should retry download errors.  No retries == 1."
+)
+
 
 def get_client_retry_count():
     """Return the integer number of times a network transaction should be attempted.  No retries == 1."""
     return CLIENT_RETRY_COUNT.get()
 
+
 CLIENT_RETRY_DELAY_SECONDS = IntConfigItem(
-    "CRDS_CLIENT_RETRY_DELAY_SECONDS", 0, "Seconds CRDS should wait between retries.  Defaults to 0.")
+    "CRDS_CLIENT_RETRY_DELAY_SECONDS", 0, "Seconds CRDS should wait between retries.  Defaults to 0."
+)
+
 
 def get_client_retry_delay_seconds():
     """Return the integer number of seconds CRDS should wait between retrying failed network transactions."""
     return CLIENT_RETRY_DELAY_SECONDS.get()
 
+
 def enable_retries(retry_count=20, delay_seconds=10):
     """Set reasonable defaults for CRDS retries"""
     CLIENT_RETRY_COUNT.set(retry_count)
     CLIENT_RETRY_DELAY_SECONDS.set(delay_seconds)
-    
+
+
 def disable_retries():
     """Set the defaults for only one try for each network transaction."""
     CLIENT_RETRY_COUNT.set(1)
     CLIENT_RETRY_DELAY_SECONDS.set(0)
-    
+
+
 CRDS_DEFAULT_SERVERS = {
-    "hst" : "https://hst-crds.stsci.edu",
-    "jwst" : "https://jwst-crds.stsci.edu",
+    "hst": "https://hst-crds.stsci.edu",
+    "jwst": "https://jwst-crds.stsci.edu",
     # None : "https://crds-serverless-mode.stsci.edu"
 }
+
 
 def get_server_url(observatory):
     """Return either the value of CRDS_SERVER_URL or an appropriate default server for `observatory`."""
     return os.environ.get("CRDS_SERVER_URL", CRDS_DEFAULT_SERVERS.get(observatory, None))
 
+
 # ===========================================================================
 
 USERNAME = None
+
 
 def get_username(override=None):
     """Initialize the USERNAME config item and return the value, setting it to
@@ -788,8 +899,11 @@ def get_username(override=None):
     if USERNAME is None:
         # get env_var or ini_file
         USERNAME = StrConfigItem(
-            "CRDS_USERNAME", None, ini_section="authentication",
-            comment="User's e-mail on CRDS server, defaulting to current login.")
+            "CRDS_USERNAME",
+            None,
+            ini_section="authentication",
+            comment="User's e-mail on CRDS server, defaulting to current login.",
+        )
         # ultimately: override or env_var or ini_file or fallback function
         username = override or USERNAME.get()
         if username in ["None", "none", None]:
@@ -797,7 +911,9 @@ def get_username(override=None):
         USERNAME.set(username)
     return USERNAME.get()
 
+
 PASSWORD = None
+
 
 def get_password(override=None):
     """Initialize the PASSWORD config item and return the value setting it to
@@ -808,17 +924,22 @@ def get_password(override=None):
     if PASSWORD is None:
         # ultimately: override or env_var or ini_file or fallback function
         PASSWORD = StrConfigItem(
-            "MAST_API_TOKEN", None, ini_section="authentication",
-            comment="User's MAST_API_TOKEN, defaulting to echo-less key entry.")
+            "MAST_API_TOKEN",
+            None,
+            ini_section="authentication",
+            comment="User's MAST_API_TOKEN, defaulting to echo-less key entry.",
+        )
         password = override or PASSWORD.get()
         if password in ["None", "none", None]:
             password = getpass.getpass("MAST_API_TOKEN: ")
         PASSWORD.set(password)
     return PASSWORD.get()
 
+
 # ===========================================================================
 
 _CRDS_CACHE_READONLY = False
+
 
 def set_cache_readonly(readonly=True):
     """Set the flag controlling writes to the CRDS cache."""
@@ -826,9 +947,11 @@ def set_cache_readonly(readonly=True):
     _CRDS_CACHE_READONLY = readonly
     return _CRDS_CACHE_READONLY
 
+
 def get_cache_readonly():
     """Read the flag controlling writes to the CRDS cache.  When True,  no write to cache should occur."""
     return _CRDS_CACHE_READONLY or env_to_bool("CRDS_READONLY_CACHE", False)
+
 
 def writable_cache_abort(func):
     """Generator a filter by decorating `func`.  These call `func` and return False when the CRDS cache is 
@@ -839,6 +962,7 @@ def writable_cache_abort(func):
     if writable_cache_or_info(... log message parameters...):
         block of code requiring writable cache
     """
+
     def func_check_writable(*args, **keys):
         """func_check_writable is a wrapper which issues a func() message when CRDS
         is configured for a readonly cache.
@@ -850,13 +974,16 @@ def writable_cache_abort(func):
             return True
         func_check_writable.__name__ = "wrapped_writable_" + func.__name__
         func_check_writable._wrapped_writable = True
+
     return func_check_writable
+
 
 writable_cache_or_info = writable_cache_abort(log.info)
 writable_cache_or_verbose = writable_cache_abort(log.verbose)
 writable_cache_or_warning = writable_cache_abort(log.warning)
 
 # ===========================================================================
+
 
 def filetype(filename):
     """Classify `filename`'s type so it can be processed or displayed.
@@ -897,17 +1024,20 @@ def filetype(filename):
         return "asdf"
     elif filename.endswith(".txt"):
         return "text"
-    elif re.match(r".*\.r[0-9][hd]$", filename): # GEIS header
+    elif re.match(r".*\.r[0-9][hd]$", filename):  # GEIS header
         return "geis"
     else:
         return "unknown"
+
 
 def file_in_cache(filename, observatory):
     """Return True IFF `filename` is in the local cache."""
     path = locate_file(os.path.basename(filename), observatory)
     return os.path.exists(path)
 
+
 # ===========================================================================
+
 
 def get_path(filename, observatory):
     """Return the CRDS cache path of `filename` for `observatory`.   The path is
@@ -916,6 +1046,7 @@ def get_path(filename, observatory):
     assert OBSERVATORY_RE.match(observatory), "Invalid observatory " + repr(observatory)
     fullpath = locate_file(filename, observatory)
     return os.path.dirname(fullpath)
+
 
 def locate_file(filepath, observatory):
     """Returns CRDS cache path if `filepath` has no directory, otherwise `filepath` as-is.
@@ -931,13 +1062,15 @@ def locate_file(filepath, observatory):
         return filepath
     return relocate_file(filepath, observatory)
 
+
 def pop_crds_uri(filepath):
     """Pop off crds:// from a filepath,  yielding an pathless filename."""
     if filepath.startswith("crds://"):
-        filepath = filepath[len("crds://"):]
+        filepath = filepath[len("crds://") :]
         assert not os.path.dirname(filepath), "crds:// must prefix a filename with no path."
     return filepath
-    
+
+
 def relocate_file(filepath, observatory):
     """Returns path in CRDS cache where `filepath` would be relocated if it were
     copied into the CRDS cache.
@@ -954,7 +1087,9 @@ def relocate_file(filepath, observatory):
     else:
         return relocate_reference(filepath, observatory)
 
+
 # ===========================================================================
+
 
 def locate_reference(ref, observatory):
     """Returns CRDS cache path for `ref` if it specifies no directory, otherwise
@@ -963,6 +1098,7 @@ def locate_reference(ref, observatory):
     if os.path.dirname(ref):
         return ref
     return relocate_reference(ref, observatory)
+
 
 def relocate_reference(ref, observatory):
     """Returns CRDS cache location where `ref` would be copied if it
@@ -979,7 +1115,9 @@ def relocate_reference(ref, observatory):
         return os.path.join(get_crds_refpath(observatory), os.path.basename(ref))
     else:
         from crds.core import utils
+
         return utils.get_locator_module(observatory).locate_file(ref)
+
 
 # ===========================================================================
 if os.path.exists("/tmp"):
@@ -988,37 +1126,45 @@ else:
     DEFAULT_LOCK_PATH = os.path.join(get_crds_root_cfgpath(), "locks")
 
 CACHE_LOCK_PATH = StrConfigItem(
-    "CRDS_LOCK_PATH", DEFAULT_LOCK_PATH,
-    "Lock directory used to store lock files,  nominally for CRDS cache.")
+    "CRDS_LOCK_PATH", DEFAULT_LOCK_PATH, "Lock directory used to store lock files,  nominally for CRDS cache."
+)
 
-USE_LOCKING = BooleanConfigItem("CRDS_USE_LOCKING", True,
-    "Set to False to turn off CRDS cache locking.")
+USE_LOCKING = BooleanConfigItem("CRDS_USE_LOCKING", True, "Set to False to turn off CRDS cache locking.")
 
-LOCKING_MODE = StrConfigItem("CRDS_LOCKING_MODE",  "multiprocessing",
-    "Form of locking used by CRDS cache.", 
+LOCKING_MODE = StrConfigItem(
+    "CRDS_LOCKING_MODE",
+    "multiprocessing",
+    "Form of locking used by CRDS cache.",
     valid_values=["lockfile", "filelock", "multiprocessing"],
-    lower=True)
+    lower=True,
+)
+
 
 def get_crds_lockpath(lock_filename):
     """Return the full path of `lock_filename` filename based on CRDS lock path configuration."""
     return os.path.join(CACHE_LOCK_PATH.get(), lock_filename)
 
+
 # ===========================================================================
+
 
 def complete_re(regex_str):
     """Add ^$ to `regex_str` to force match to entire string."""
     return "^" + regex_str + "$"
 
+
 OBSERVATORY_RE_STR = r"[a-zA-Z_0-9]{1,8}"
 OBSERVATORY_RE = re.compile(complete_re(OBSERVATORY_RE_STR))
 FILE_RE_STR = r"[A-Za-z0-9\._\- ]{1,128}|N/A|OMIT"
-FILE_RE = re.compile(complete_re(FILE_RE_STR)) # at min *should not* contain % < > \ { }
+FILE_RE = re.compile(complete_re(FILE_RE_STR))  # at min *should not* contain % < > \ { }
 FILE_PATH_RE_STR = r"([/A-Za-z0-9_\- ]{1,256})?" + FILE_RE_STR
 FILE_PATH_RE = re.compile(complete_re(FILE_PATH_RE_STR))  # at min *should not* contain % < > \ { }
+
 
 def check_filename(filename):
     """Verify that `filename` is a basename with no dangerous characters."""
     assert FILE_RE.match(filename), "Invalid file name " + repr(filename)
+
 
 def check_path(path):
     """Make sure `path` has no dangerous characters."""
@@ -1026,7 +1172,9 @@ def check_path(path):
     assert FILE_PATH_RE.match(path), "Invalid file path " + repr(path)
     return path
 
+
 # -------------------------------------------------------------------------------------
+
 
 def is_reference(reference):
     """Return True IFF file name `reference` is plausible as a reference file name.
@@ -1059,33 +1207,27 @@ def is_reference(reference):
     extension = os.path.splitext(reference)[-1].lower()
     return bool(re.match(r"\.fits|\.asdf|\.r\dh|\.yaml|\.json|\.text", extension))
 
+
 # max len name component == 32.  max components == 3.
 # no digits in CRDS name components,  except serial no
-CRDS_OBS_RE_STR = r"(?P<observatory>" + r"[a-z][a-z]{1,8})"     # No hyphens
-CRDS_INSTR_RE_STR = r"(?P<instrument>" + r"[a-z][a-z]{1,16})"   # No hyphens
+CRDS_OBS_RE_STR = r"(?P<observatory>" + r"[a-z][a-z]{1,8})"  # No hyphens
+CRDS_INSTR_RE_STR = r"(?P<instrument>" + r"[a-z][a-z]{1,16})"  # No hyphens
 CRDS_FILEKIND_RE_STR = r"(?P<filekind>" + r"[a-z][a-z\-]{1,32})"
-CRDS_BASE_NAME_RE_STR = (r"(" +
-        CRDS_OBS_RE_STR + r"(_" + 
-            CRDS_INSTR_RE_STR + r"(_" +
-                CRDS_FILEKIND_RE_STR +
-            r")?" +
-        r")?" +
-    r")")
-    
-CRDS_SYM_NAME_RE_STR = (r"(" +
-        CRDS_OBS_RE_STR + r"(\-" + 
-            CRDS_INSTR_RE_STR + r"(\-" +
-                CRDS_FILEKIND_RE_STR +
-            r")?" +
-        r")?" +
-    r")")
-    
+CRDS_BASE_NAME_RE_STR = (
+    r"(" + CRDS_OBS_RE_STR + r"(_" + CRDS_INSTR_RE_STR + r"(_" + CRDS_FILEKIND_RE_STR + r")?" + r")?" + r")"
+)
+
+CRDS_SYM_NAME_RE_STR = (
+    r"(" + CRDS_OBS_RE_STR + r"(\-" + CRDS_INSTR_RE_STR + r"(\-" + CRDS_FILEKIND_RE_STR + r")?" + r")?" + r")"
+)
+
 CRDS_NAME_RE_STR = CRDS_BASE_NAME_RE_STR + r"(_\d\d\d\d)?\."
-CRDS_NAME_RE = re.compile(CRDS_NAME_RE_STR)   # intentionally not complete. no ^ or $
+CRDS_NAME_RE = re.compile(CRDS_NAME_RE_STR)  # intentionally not complete. no ^ or $
 
 # s7g1700gl_dead.fits
 CDBS_NAME_RE_STR = r"[a-z0-9_]{1,52}\.(fits|r\d[hd])"
 CDBS_NAME_RE = re.compile(complete_re(CDBS_NAME_RE_STR))
+
 
 def is_valid_reference_name(filename):
     """Return True IFF `filename` has a valid CRDS reference filename format.
@@ -1104,6 +1246,7 @@ def is_valid_reference_name(filename):
     """
     name = os.path.basename(filename)
     return is_reference(name) and (is_crds_name(name) or is_cdbs_name(name))
+
 
 def is_crds_name(name):
     """Return True IFF `name` is a valid CRDS-style name.
@@ -1129,6 +1272,7 @@ def is_crds_name(name):
     name = os.path.basename(name).lower()
     return bool(CRDS_NAME_RE.match(name))
 
+
 def is_cdbs_name(name):
     """Return True IFF `name is a valid CDBS-style name.
 
@@ -1144,68 +1288,76 @@ def is_cdbs_name(name):
     name = os.path.basename(name).lower()
     return bool(CDBS_NAME_RE.match(name))
 
+
 # -------------------------------------------------------------------------------------
 
 # Standard date time format using T separator for command line use specifying contexts.
 # e.g. 2040-02-22T12:01:30.4567
-CONTEXT_DATETIME_RE_STR = (
-    r"\d\d\d\d\-\d\d\-\d\d" + 
-        r"(T\d\d:\d\d:\d\d" + 
-            r"(\.\d+)?" +
-        r")?"
-    )
+CONTEXT_DATETIME_RE_STR = r"\d\d\d\d\-\d\d\-\d\d" + r"(T\d\d:\d\d:\d\d" + r"(\.\d+)?" + r")?"
 
 CONTEXT_DATETIME_RE = re.compile(complete_re(CONTEXT_DATETIME_RE_STR))
 
-CONTEXT_OBS_RE_STR = r"[a-z]{1,8}" 
+CONTEXT_OBS_RE_STR = r"[a-z]{1,8}"
 
 # e.g.   2040-02-22T12:01:30.4567,  hst-2040-02-22T12:01:30.4567, hst-acs-2040-02-22T12:01:30.4567, ...
 CONTEXT_RE_STR = (
-    r"(" +
-        r"(?P<context>" + CRDS_SYM_NAME_RE_STR + ")" + 
-        r"(" +
-            r"(\-" +
-                r"(?P<date>" +
-                    r"(" + CONTEXT_DATETIME_RE_STR + r")" +
-                        r"|" +
-                    r"(" + "edit|operational|versions" + r")" +
-                r")" +
-            r")" + 
-        r")" + 
-    r")" +
-        r"|" +
-    r"(" +
-        r"(" + CONTEXT_DATETIME_RE_STR + r")" +
-    r")"
-    )
+    r"("
+    + r"(?P<context>"
+    + CRDS_SYM_NAME_RE_STR
+    + ")"
+    + r"("
+    + r"(\-"
+    + r"(?P<date>"
+    + r"("
+    + CONTEXT_DATETIME_RE_STR
+    + r")"
+    + r"|"
+    + r"("
+    + "edit|operational|versions"
+    + r")"
+    + r")"
+    + r")"
+    + r")"
+    + r")"
+    + r"|"
+    + r"("
+    + r"("
+    + CONTEXT_DATETIME_RE_STR
+    + r")"
+    + r")"
+)
 CONTEXT_RE = re.compile(complete_re(CONTEXT_RE_STR))
 
 PIPELINE_CONTEXT_RE_STR = (
-    r"(" +
-        r"(?P<context>" + CRDS_OBS_RE_STR + ")" + 
-        r"(" +
-            r"(\-" +
-                r"(" +
-                    r"(?P<date>" + CONTEXT_DATETIME_RE_STR + r")" +
-                        "|" +
-                    r"(?P<context_tag>" + "edit|operational|versions" + r")" +
-                r")" +
-            r")" + 
-        r")"
-    r")" +
-        r"|" +
-    r"(" +
-        r"(" + CONTEXT_DATETIME_RE_STR + r")" +
-    r")"
-    )
+    r"("
+    + r"(?P<context>"
+    + CRDS_OBS_RE_STR
+    + ")"
+    + r"("
+    + r"(\-"
+    + r"("
+    + r"(?P<date>"
+    + CONTEXT_DATETIME_RE_STR
+    + r")"
+    + "|"
+    + r"(?P<context_tag>"
+    + "edit|operational|versions"
+    + r")"
+    + r")"
+    + r")"
+    + r")"
+    r")" + r"|" + r"(" + r"(" + CONTEXT_DATETIME_RE_STR + r")" + r")"
+)
 PIPELINE_CONTEXT_RE = re.compile(complete_re(PIPELINE_CONTEXT_RE_STR))
 
 MAPPING_RE_STR = CRDS_NAME_RE_STR + r"[pir]map"
 MAPPING_RE = re.compile(complete_re(MAPPING_RE_STR))
 
+
 def is_mapping(mapping):
     """Return True IFF `mapping` has an extension indicating a CRDS mapping file."""
     return isinstance(mapping, str) and mapping.endswith((".pmap", ".imap", ".rmap"))
+
 
 def is_simple_crds_mapping(mapping):
     """Return True IFF `mapping` implicitly or explicitly exists in the CRDS cache.
@@ -1262,9 +1414,11 @@ def is_simple_crds_mapping(mapping):
     else:
         return False
 
+
 def is_valid_mapping_name(mapping):
     """Return True IFF `mapping` has a CRDS-style root name and a mapping extension."""
     return is_mapping(mapping) and bool(MAPPING_RE.match(mapping))
+
 
 def is_mapping_spec(mapping):
     """Return True IFF `mapping` is a mapping name *or* a date based mapping specification.
@@ -1311,9 +1465,11 @@ def is_mapping_spec(mapping):
     """
     return is_mapping(mapping) or (isinstance(mapping, str) and bool(CONTEXT_RE.match(mapping)))
 
+
 def is_context(mapping):
     """Return True IFF `mapping` has an extension indicating a CRDS CONTEXT, i.e. .pmap."""
     return isinstance(mapping, str) and mapping.endswith((".pmap",))
+
 
 def is_context_spec(mapping):
     """Return True IFF `mapping` is a mapping name *or* a date based mapping specification.
@@ -1345,6 +1501,7 @@ def is_context_spec(mapping):
     """
     return is_context(mapping) or (isinstance(mapping, str) and bool(PIPELINE_CONTEXT_RE.match(mapping)))
 
+
 def is_date_based_mapping_spec(mapping):
     """Return True IFF `mapping` is a date based specification (not a filename).
  
@@ -1359,6 +1516,7 @@ def is_date_based_mapping_spec(mapping):
     """
     return is_mapping_spec(mapping) and not is_mapping(mapping)
 
+
 def locate_mapping(mappath, observatory=None):
     """Return the CRDS cache path for mapping `mappath` if it has no directory,
     otherwise returns mappath as-is.
@@ -1366,6 +1524,7 @@ def locate_mapping(mappath, observatory=None):
     if os.path.dirname(mappath):
         return mappath
     return relocate_mapping(mappath, observatory)
+
 
 def relocate_mapping(mappath, observatory=None):
     """Return the CRDS cache path where CRDS mapping `mappath` should be
@@ -1377,9 +1536,11 @@ def relocate_mapping(mappath, observatory=None):
         return mappath
     return os.path.join(get_crds_mappath(observatory), os.path.basename(mappath))
 
+
 def mapping_exists(mapping):
     """Return True IFF `mapping` exists on the local file system."""
     return os.path.exists(locate_mapping(mapping))
+
 
 # These are name based but could be written as slower check-the-mapping
 # style functions.
@@ -1394,12 +1555,14 @@ def mapping_to_observatory(context_file):
     """
     return os.path.basename(context_file).split("_")[0].split(".")[0]
 
+
 def mapping_to_instrument(context_file):
     """
     >>> mapping_to_instrument('hst_acs_biasfile.rmap')
     'acs'
     """
     return os.path.basename(context_file).split("_")[1].split(".")[0]
+
 
 def mapping_to_filekind(context_file):
     """
@@ -1408,27 +1571,32 @@ def mapping_to_filekind(context_file):
     """
     return os.path.basename(context_file).split("_")[2].split(".")[0]
 
+
 # -------------------------------------------------------------------------------------
+
 
 def get_crds_state():
     """Capture the current CRDS configuration and return it as a dictionary.
     Intended for customizing state during self-tests and restoring during teardown.
     """
     from .log import get_verbose
-    env = { key : val for key, val in os.environ.items() if key.startswith("CRDS_") }
+
+    env = {key: val for key, val in os.environ.items() if key.startswith("CRDS_")}
     env["CRDS_REF_SUBDIR_MODE"] = CRDS_REF_SUBDIR_MODE
     env["_CRDS_CACHE_READONLY"] = get_cache_readonly()
     env["PASS_INVALID_VALUES"] = PASS_INVALID_VALUES.get()
     env["CRDS_VERBOSITY"] = get_verbose()
     return env
 
+
 def set_crds_state(old_state):
     """Restore the configuration of CRDS returned by get_crds_state()."""
-    from crds.client import api   # deferred circular import
+    from crds.client import api  # deferred circular import
     from .log import set_verbose
+
     # determination of observatory and server URL are intertwined
     global CRDS_REF_SUBDIR_MODE, _CRDS_CACHE_READONLY
-    clear_crds_state()    
+    clear_crds_state()
     log.set_verbose(old_state["CRDS_VERBOSITY"])
     _CRDS_CACHE_READONLY = old_state.pop("_CRDS_CACHE_READONLY")
     CRDS_REF_SUBDIR_MODE = old_state["CRDS_REF_SUBDIR_MODE"]
@@ -1438,6 +1606,7 @@ def set_crds_state(old_state):
         api.set_crds_server(os.environ["CRDS_SERVER_URL"])
     if os.environ.get("CRDS_CWD"):
         os.chdir(os.environ["CRDS_CWD"])
+
 
 def clear_crds_state():
     """Wipe out the existing configuration variable state of CRDS.
@@ -1449,10 +1618,11 @@ def clear_crds_state():
     CRDS_REF_SUBDIR_MODE = "None"
     _CRDS_CACHE_READONLY = False
 
+
 # -------------------------------------------------------------------------------------
 # Identifier used  to connect to remote status channels to monitor submission status, etc.
 
-PROCESS_KEY_RE_STR = r"[a-zA-Z0-9:\.\-]{1,128}"   #  character "/" must be excluded
+PROCESS_KEY_RE_STR = r"[a-zA-Z0-9:\.\-]{1,128}"  #  character "/" must be excluded
 PROCESS_KEY_RE = re.compile(complete_re(PROCESS_KEY_RE_STR))
 
 USER_NAME_RE_STR = r"[a-z_]+"
@@ -1462,9 +1632,9 @@ USER_NAME_RE = re.compile(complete_re(USER_NAME_RE_STR))
 
 # approximate regex to validate semver.org version numbers.
 
-VERSION_RE_STR = complete_re(
-    r"(\d{1,8}(\.\d{1,8}(\.\d{1,8})?)?)[a-zA-Z0-9_\+\-\.]{0,128}")
+VERSION_RE_STR = complete_re(r"(\d{1,8}(\.\d{1,8}(\.\d{1,8})?)?)[a-zA-Z0-9_\+\-\.]{0,128}")
 VERSION_RE = re.compile(VERSION_RE_STR)
+
 
 def simplify_version(version):
     """
@@ -1483,13 +1653,17 @@ def simplify_version(version):
     """
     return VERSION_RE.match(version).group(1)
 
+
 # -------------------------------------------------------------------------------------
+
 
 def test():
     """Run doctests on crds.config module."""
     import doctest
     from . import config
+
     return doctest.testmod(config)
 
-if __name__ ==  "__main__":
+
+if __name__ == "__main__":
     print(test())

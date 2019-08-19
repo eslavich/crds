@@ -7,6 +7,7 @@ from crds import client
 from crds.core import utils, log
 from crds.core.exceptions import DuplicateSha1sumError
 
+
 def check_sha1sums(filepaths, observatory=None):
     """Given a list of filepaths which nominally will be submitted
     to CRDS for project `observatory`,  check to see if any are
@@ -23,6 +24,7 @@ def check_sha1sums(filepaths, observatory=None):
     for filepath in filepaths:
         check_sha1sum(filepath, sha1sums, observatory)
 
+
 def check_sha1sum(filepath, sha1sums=None, observatory=None):
     """Check to see if the sha1sum of `filepath` is identical to any
     of the files mentioned in `sha1sums`.
@@ -33,12 +35,12 @@ def check_sha1sum(filepath, sha1sums=None, observatory=None):
     if sha1sums is None:
         sha1sums = get_all_sha1sums(observatory)
     sha1sum = utils.checksum(filepath)
-    log.verbose("Checking file", repr(filepath), "with sha1sum", repr(sha1sum),
-                "for duplication on CRDS server.")
+    log.verbose("Checking file", repr(filepath), "with sha1sum", repr(sha1sum), "for duplication on CRDS server.")
     if sha1sum in sha1sums:
         raise DuplicateSha1sumError(
-            "File", repr(os.path.basename(filepath)),
-            "is identical to existing CRDS file", repr(sha1sums[sha1sum]))
+            "File", repr(os.path.basename(filepath)), "is identical to existing CRDS file", repr(sha1sums[sha1sum])
+        )
+
 
 def get_all_sha1sums(observatory=None):
     """Query the CRDS server for sha1sums for all existing files.
@@ -47,9 +49,7 @@ def get_all_sha1sums(observatory=None):
     """
     if observatory is None:
         observatory = client.get_default_observatory()
-    fileinfo = client.get_file_info_map(
-        observatory, fields=["sha1sum"])
-    sha1sums = { info["sha1sum"]: name
-                 for name,info in fileinfo.items() }
+    fileinfo = client.get_file_info_map(observatory, fields=["sha1sum"])
+    sha1sums = {info["sha1sum"]: name for name, info in fileinfo.items()}
     log.verbose("Retrieved", len(sha1sums), "sha1sums for existing CRDS files.")
     return sha1sums

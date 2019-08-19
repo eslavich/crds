@@ -22,6 +22,7 @@ from crds.client import api
 
 # ============================================================================
 
+
 class ListScript(cmdline.ContextsScript):
     """Command line script for listing a variety of information about CRDS."""
 
@@ -29,7 +30,7 @@ class ListScript(cmdline.ContextsScript):
 cache, reference and mapping files, default context names, and dataset headers
 and ids used for CRDS reprocessing recommendations.
     """
-        
+
     epilog = """
 General categories of information driven by switches include:
 
@@ -295,76 +296,149 @@ jwst_miri_dark_0012.rmap
 % crds list --resolve-contexts --contexts jwst-niriss-superbias-2016-01-01T00:00:00
 jwst_niriss_superbias_0005.rmap
     """
+
     def __init__(self, *args, **keys):
         super(ListScript, self).__init__(*args, **keys)
         self.show_context_resolution = False
         self._file_info = {}
-        
+
     def add_args(self):
         """Add switches unique to crds.list."""
 
-        self.add_argument('--references', action='store_true', dest="list_references",
-            help='print names of reference files referred to by contexts')
-        self.add_argument('--mappings', action='store_true', dest="list_mappings",
-            help='print names of mapping files referred to by contexts')
-        self.add_argument("--cached-references", action="store_true",
-            help="print the paths of all references in the local cache. very primitive.")
-        self.add_argument("--cached-mappings", action="store_true",
-            help="print the paths of all mappings in the local cache. very primitive.")
-        self.add_argument("--cached-pickles", action="store_true",
-            help="print the paths of all pickles in the local cache. very primitive.")
-        self.add_argument("--full-path", action="store_true",
-            help="print the full paths of listed files.")
+        self.add_argument(
+            "--references",
+            action="store_true",
+            dest="list_references",
+            help="print names of reference files referred to by contexts",
+        )
+        self.add_argument(
+            "--mappings",
+            action="store_true",
+            dest="list_mappings",
+            help="print names of mapping files referred to by contexts",
+        )
+        self.add_argument(
+            "--cached-references",
+            action="store_true",
+            help="print the paths of all references in the local cache. very primitive.",
+        )
+        self.add_argument(
+            "--cached-mappings",
+            action="store_true",
+            help="print the paths of all mappings in the local cache. very primitive.",
+        )
+        self.add_argument(
+            "--cached-pickles",
+            action="store_true",
+            help="print the paths of all pickles in the local cache. very primitive.",
+        )
+        self.add_argument("--full-path", action="store_true", help="print the full paths of listed files.")
 
-        self.add_argument("--dataset-ids-for-instruments", nargs="+", dest="dataset_ids", default=None, metavar="INSTRUMENTS",
-            help="print the dataset ids known to CRDS associated for the specified instruments.")
-        self.add_argument("--dataset-headers", nargs="+", dest="dataset_headers", default=None, metavar="IDS",
-            help="print matching parameters for the specified dataset ids.")
-        self.add_argument("--id-expansions-only", action="store_true", dest="id_expansions_only",
-            help="print out only the <product>:<exposure> expansion associated with the specified --dataset-headers ids.")
-        self.add_argument("--first-id-expansion-only", action="store_true", dest="first_id_expansion_only",
-            help="print out only the first exposure ID (header or expanded) associated with a particular product ID.")
-        self.add_argument("--minimize-headers", action="store_true", dest="minimize_headers",
-            help="print out only header parameters required by a particular CRDS context.")
-        self.add_argument("--json", action="store_true", dest="json",
-            help="print out header parameters in JSON format suited for crds.bestrefs and grepping.")
+        self.add_argument(
+            "--dataset-ids-for-instruments",
+            nargs="+",
+            dest="dataset_ids",
+            default=None,
+            metavar="INSTRUMENTS",
+            help="print the dataset ids known to CRDS associated for the specified instruments.",
+        )
+        self.add_argument(
+            "--dataset-headers",
+            nargs="+",
+            dest="dataset_headers",
+            default=None,
+            metavar="IDS",
+            help="print matching parameters for the specified dataset ids.",
+        )
+        self.add_argument(
+            "--id-expansions-only",
+            action="store_true",
+            dest="id_expansions_only",
+            help="print out only the <product>:<exposure> expansion associated with the specified --dataset-headers ids.",
+        )
+        self.add_argument(
+            "--first-id-expansion-only",
+            action="store_true",
+            dest="first_id_expansion_only",
+            help="print out only the first exposure ID (header or expanded) associated with a particular product ID.",
+        )
+        self.add_argument(
+            "--minimize-headers",
+            action="store_true",
+            dest="minimize_headers",
+            help="print out only header parameters required by a particular CRDS context.",
+        )
+        self.add_argument(
+            "--json",
+            action="store_true",
+            dest="json",
+            help="print out header parameters in JSON format suited for crds.bestrefs and grepping.",
+        )
 
-        self.add_argument("--config", action="store_true", dest="config",
-            help="print CRDS configuration information.")
+        self.add_argument("--config", action="store_true", dest="config", help="print CRDS configuration information.")
 
-        self.add_argument("--status", action="store_true", dest="status",
-            help="print brief, basic, CRDS configuration information.")
+        self.add_argument(
+            "--status", action="store_true", dest="status", help="print brief, basic, CRDS configuration information."
+        )
 
-        self.add_argument("--cat", nargs="*", dest="cat", metavar="FILES", default=None,
-            help="print the text of the specified mapping files.")
-        self.add_argument("--keywords", nargs="+", 
-            help="limited list of keywords to be catted from reference headers.")
-        self.add_argument("--add-filenames", action="store_true",
-            help="prefix each line of a cat'ed file with the filename.")
-        self.add_argument("--no-arrays", action="store_true",
-            help="Don't --cat array properties that are slow to compute. Use for large files.")
+        self.add_argument(
+            "--cat",
+            nargs="*",
+            dest="cat",
+            metavar="FILES",
+            default=None,
+            help="print the text of the specified mapping files.",
+        )
+        self.add_argument("--keywords", nargs="+", help="limited list of keywords to be catted from reference headers.")
+        self.add_argument(
+            "--add-filenames", action="store_true", help="prefix each line of a cat'ed file with the filename."
+        )
+        self.add_argument(
+            "--no-arrays",
+            action="store_true",
+            help="Don't --cat array properties that are slow to compute. Use for large files.",
+        )
 
-        self.add_argument("--operational-context", action="store_true", dest="operational_context",
-            help="print the name of the operational context on the central CRDS server.")
-        self.add_argument("--remote-context", type=str, metavar="PIPELINE", 
-            help="print the name of the context reported as in use by the specified pipeline.")
-        self.add_argument("--resolve-contexts", action="store_true", dest="resolve_contexts",
-            help="print the literal names of the contexts defined by the command line context specifiers.")
+        self.add_argument(
+            "--operational-context",
+            action="store_true",
+            dest="operational_context",
+            help="print the name of the operational context on the central CRDS server.",
+        )
+        self.add_argument(
+            "--remote-context",
+            type=str,
+            metavar="PIPELINE",
+            help="print the name of the context reported as in use by the specified pipeline.",
+        )
+        self.add_argument(
+            "--resolve-contexts",
+            action="store_true",
+            dest="resolve_contexts",
+            help="print the literal names of the contexts defined by the command line context specifiers.",
+        )
 
-        self.add_argument("--required-parkeys", action="store_true",
-            help="print the names of the parkeys required to compute bestrefs for the specified mappings.")
+        self.add_argument(
+            "--required-parkeys",
+            action="store_true",
+            help="print the names of the parkeys required to compute bestrefs for the specified mappings.",
+        )
 
-        self.add_argument("--file-properties", nargs="*", default=None,
-                          help="print the instrument, filekind, filename for each of the files specified.")
-        
+        self.add_argument(
+            "--file-properties",
+            nargs="*",
+            default=None,
+            help="print the instrument, filekind, filename for each of the files specified.",
+        )
+
         super(ListScript, self).add_args()
-        
+
     def main(self):
         """List files."""
-        if self.args.cat is not None: # including []
+        if self.args.cat is not None:  # including []
             return self.cat_files()
 
-        if self.args.file_properties is not None: # including []
+        if self.args.file_properties is not None:  # including []
             return self.list_file_properties()
 
         if self.args.operational_context:
@@ -376,7 +450,7 @@ jwst_niriss_superbias_0005.rmap
 
         if self.args.resolve_contexts:
             self.list_resolved_contexts()
-                    
+
         if self.args.list_references:
             self.list_references()
         if self.args.list_mappings:
@@ -424,8 +498,8 @@ jwst_niriss_superbias_0005.rmap
         and whether or not --mappings or --references are set.
         """
         mappings = self.get_context_mappings() if self.args.list_mappings else []
-        references = self.get_context_references() if self.args.list_references else []        
-        return [filename for filename in mappings + references if filename != 'N/A']
+        references = self.get_context_references() if self.args.list_references else []
+        return [filename for filename in mappings + references if filename != "N/A"]
 
     def list_file_properties(self):
         """Print out the (instrument, filekind, filename) information for each of the
@@ -452,16 +526,17 @@ jwst_niriss_superbias_0005.rmap
         catted_files = self.get_words(self.args.cat) + self.implied_files
         try:
             self._file_info = api.get_file_info_map(
-                self.observatory, files=[os.path.basename(filename) for filename in catted_files])
+                self.observatory, files=[os.path.basename(filename) for filename in catted_files]
+            )
         except Exception:
             log.verbose_warning("Failed retrieving CRDS server catalog information.  May need to set CRDS_SERVER_URL.")
 
         # This could be expanded to include the closure of mappings or references
         for name in catted_files:
             with log.error_on_exception("Failed dumping:", repr(name)):
-                path = self.locate_file(name) 
+                path = self.locate_file(name)
                 self._cat_file(path)
-                    
+
     def _cat_file(self, path):
         """Print out information on a single reference or mapping at `path`."""
         self._cat_banner("File:", os.path.abspath(path), delim="#", bottom_delim="-")
@@ -470,18 +545,18 @@ jwst_niriss_superbias_0005.rmap
         else:
             self._cat_text(path)
         if self._file_info:
-            self._cat_catalog_info(path)        
+            self._cat_catalog_info(path)
 
     def _cat_banner(self, *args, **keys):
         """Print a banner for --cat for `name` and return the filepath of `name`."""
-        delim = keys.get("delim","#")
+        delim = keys.get("delim", "#")
         bottom_delim = keys.get("bottom_delim", None)
         if delim:
-            print(delim*80)
+            print(delim * 80)
         print(*args)
         if bottom_delim:
-            print(bottom_delim*80)
-        
+            print(bottom_delim * 80)
+
     def _cat_reference(self, path):
         """Print information on any reference type at `path`."""
         self._cat_header(path)
@@ -490,25 +565,24 @@ jwst_niriss_superbias_0005.rmap
             self._print_lines(path, _fits_info_lines(path))
             if not self.args.no_arrays:
                 self._cat_array_properties(path)
-        
+
     def _cat_array_properties(self, path):
         """Print out the CRDS interpretation of every array in `path`,  currently FITS only."""
         with data_file.fits_open(path) as hdulist:
             for i, hdu in enumerate(hdulist):
-                with log.warn_on_exception("Can't load array properties for HDU[" + str(i) +"]"):
+                with log.warn_on_exception("Can't load array properties for HDU[" + str(i) + "]"):
                     if i > 0:
-                        extname = hdu.header.get("EXTNAME",str(i))
-                        self._cat_banner("CRDS Array Info [" + repr(extname) + "]:",
-                                         delim="-", bottom_delim=None)
+                        extname = hdu.header.get("EXTNAME", str(i))
+                        self._cat_banner("CRDS Array Info [" + repr(extname) + "]:", delim="-", bottom_delim=None)
                         props = data_file.get_array_properties(path, extname)
-                        props = { prop:value for (prop,value) in props.items() if value is not None }
+                        props = {prop: value for (prop, value) in props.items() if value is not None}
                         self._print_lines(path, _pp_lines(props))
 
     def _cat_text(self, path):
         """Dump out the contexts of a text file."""
         with open(path) as pfile:
             self._print_lines(path, pfile.readlines())
-            
+
     def _cat_header(self, path):
         """Dump out the header associated with a reference file."""
         old = config.ALLOW_SCHEMA_VIOLATIONS.set(True)
@@ -547,30 +621,34 @@ jwst_niriss_superbias_0005.rmap
         """Consult the server and print the names of all references associated with
         the given contexts.
         """
-        references = [ rmap.locate_file(filename, self.observatory) if self.args.full_path else filename
-                       for filename in self.get_context_references() ]
+        references = [
+            rmap.locate_file(filename, self.observatory) if self.args.full_path else filename
+            for filename in self.get_context_references()
+        ]
         _print_list(references)
-    
+
     def list_mappings(self):
         """Consult the server and print the names of all CRDS mappings associated 
         with the given contexts.
         """
-        mappings = [ rmap.locate_file(filename, self.observatory) if self.args.full_path else filename
-                       for filename in self.get_context_mappings() ]
+        mappings = [
+            rmap.locate_file(filename, self.observatory) if self.args.full_path else filename
+            for filename in self.get_context_mappings()
+        ]
         _print_list(mappings)
-    
+
     def list_cached_mappings(self):
         """List the mapping paths in the local cache."""
         _print_list(rmap.list_mappings("*.*map", self.observatory, full_path=self.args.full_path))
-        
+
     def list_cached_pickles(self):
         """List the pickle paths in the local cache."""
         _print_list(rmap.list_pickles("*", self.observatory, full_path=self.args.full_path))
-        
+
     def list_cached_references(self):
         """List the reference paths in the local cache."""
         _print_list(rmap.list_references("*", self.observatory, full_path=self.args.full_path))
-        
+
     def list_dataset_headers(self):
         """List dataset header info for self.args.dataset_headers with respect to self.args.contexts"""
         # Support @-files for ids specified on command line
@@ -578,25 +656,29 @@ jwst_niriss_superbias_0005.rmap
         products_seen, exposures_seen = set(), set()
         expanded_ids = []
         for context in self.contexts:
-            with log.error_on_exception("Failed fetching dataset parameters with repect to", repr(context), 
-                                        "for", repr(self.args.dataset_headers)):
+            with log.error_on_exception(
+                "Failed fetching dataset parameters with repect to",
+                repr(context),
+                "for",
+                repr(self.args.dataset_headers),
+            ):
                 for returned_id, header in api.get_dataset_headers_unlimited(context, ids):
                     product, exposure = returned_id.split(":")
                     if isinstance(header, str):
-                        log.error("No header for", repr(returned_id), ":", repr(header)) # header is reason
+                        log.error("No header for", repr(returned_id), ":", repr(header))  # header is reason
                         continue
                     if self.args.first_id_expansion_only and product in products_seen:
                         continue
                     products_seen.add(product)
                     exposures_seen.add(exposure)
                     if self.args.id_expansions_only:
-                        expanded_ids += [ returned_id + (" " + context if len(self.contexts) > 1 else "")]
+                        expanded_ids += [returned_id + (" " + context if len(self.contexts) > 1 else "")]
                     else:
                         self.dump_header(context, returned_id, header)
         if self.args.id_expansions_only:
             for expanded in sorted(expanded_ids):
                 print(expanded)
-                            
+
     def dump_header(self, context, returned_id, header):
         """Print out dataset `header` for `id` and `context` in either .json or 
         multi-line formats.
@@ -610,11 +692,10 @@ jwst_niriss_superbias_0005.rmap
         header2["dataset_id"] = returned_id
         header2["CRDS_CTX"] = context
         if self.args.json:
-            json_header = { returned_id : header }
+            json_header = {returned_id: header}
             print(json.dumps(json_header))
         else:
-            print("Dataset pars for", repr(returned_id), "with respect to", repr(context) + ":\n",
-                  log.PP(header2))
+            print("Dataset pars for", repr(returned_id), "with respect to", repr(context) + ":\n", log.PP(header2))
 
     def list_dataset_ids(self):
         """Print out the dataset ids associated with the instruments specified as command line params."""
@@ -637,21 +718,34 @@ jwst_niriss_superbias_0005.rmap
         cache_subdir_mode = config.get_crds_ref_subdir_mode(self.observatory)
         pyinfo = _get_python_info()
         _print_dict("CRDS Environment", info)
-        _print_dict("CRDS Client Config", { 
-                "server_url" : current_server_url, 
+        _print_dict(
+            "CRDS Client Config",
+            {
+                "server_url": current_server_url,
                 "cache_subdir_mode": cache_subdir_mode,
                 "readonly_cache": self.readonly_cache,
                 "effective_context": heavy_client.get_context_name(self.observatory),
-                "crds" : repr(crds),
-                "version": heavy_client.version_info() 
-                })
+                "crds": repr(crds),
+                "version": heavy_client.version_info(),
+            },
+        )
         _print_dict("CRDS Actual Paths", real_paths)
-        _print_dict("CRDS Server Info", server, 
-                    ["observatory", "status", "connected", "operational_context", "last_synced", 
-                     "reference_url", "mapping_url", "effective_mode"])
+        _print_dict(
+            "CRDS Server Info",
+            server,
+            [
+                "observatory",
+                "status",
+                "connected",
+                "operational_context",
+                "last_synced",
+                "reference_url",
+                "mapping_url",
+                "effective_mode",
+            ],
+        )
         if self.observatory == "hst":
-            cal_vars = { var : os.environ[var] for var in os.environ
-                          if len(var) == 4 and var.lower().endswith("ref") }
+            cal_vars = {var: os.environ[var] for var in os.environ if len(var) == 4 and var.lower().endswith("ref")}
             _print_dict("Calibration Environment", cal_vars)
         _print_dict("Python Environment", pyinfo)
 
@@ -661,21 +755,23 @@ jwst_niriss_superbias_0005.rmap
         server = self.server_info
         pyinfo = _get_python_info()
         status = OrderedDict(
-            [("CRDS_PATH", info.get("CRDS_PATH", "undefined")),
-             ("CRDS_SERVER_URL", info.get("CRDS_SERVER_URL", "undefined")),
-             ("CRDS_MODE", info["CRDS_MODE"]),
-             ("Readonly Cache", self.readonly_cache),
-             ("Cache Locking", crds_cache_locking.status()),
-             ("Effective Context", heavy_client.get_context_name(self.observatory)),
-             ("Last Synced", server.last_synced),
-             ("CRDS Version", heavy_client.version_info()),
-             ("Python Version", pyinfo["Python Version"]),
-             ("Python Executable", pyinfo["Python Executable"]),
-             ])
+            [
+                ("CRDS_PATH", info.get("CRDS_PATH", "undefined")),
+                ("CRDS_SERVER_URL", info.get("CRDS_SERVER_URL", "undefined")),
+                ("CRDS_MODE", info["CRDS_MODE"]),
+                ("Readonly Cache", self.readonly_cache),
+                ("Cache Locking", crds_cache_locking.status()),
+                ("Effective Context", heavy_client.get_context_name(self.observatory)),
+                ("Last Synced", server.last_synced),
+                ("CRDS Version", heavy_client.version_info()),
+                ("Python Version", pyinfo["Python Version"]),
+                ("Python Executable", pyinfo["Python Executable"]),
+            ]
+        )
         _print_dict(None, status)
 
     def list_required_parkeys(self):
-        """Print out the parkeys required for matching using the specified contexts.""" 
+        """Print out the parkeys required for matching using the specified contexts."""
         for name in self.contexts:
             mapping = crds.get_cached_mapping(name)
             if isinstance(mapping, rmap.PipelineContext):
@@ -685,26 +781,24 @@ jwst_niriss_superbias_0005.rmap
                 for name in sorted(mapping.selections):
                     try:
                         rmapping = mapping.get_rmap(name)
-                    except (crds.exceptions.IrrelevantReferenceTypeError,
-                            crds.exceptions.OmitReferenceTypeError):
-                        print(name +":", repr("N/A"))
+                    except (crds.exceptions.IrrelevantReferenceTypeError, crds.exceptions.OmitReferenceTypeError):
+                        print(name + ":", repr("N/A"))
                     else:
-                        print(name + ":",  rmapping.get_required_parkeys())
+                        print(name + ":", rmapping.get_required_parkeys())
             else:
-                print(name + ":",  mapping.get_required_parkeys())
+                print(name + ":", mapping.get_required_parkeys())
+
 
 def _get_python_info():
     """Collect and return information about the Python environment"""
-    pyinfo = {
-        "Python Version" : ".".join(str(num) for num in sys.version_info),
-        "Python Executable": sys.executable,
-        }
+    pyinfo = {"Python Version": ".".join(str(num) for num in sys.version_info), "Python Executable": sys.executable}
     pypath = os.environ.get("PYTHON_PATH", None)
     if pypath:
         pyinfo["PYTHON_PATH"] = pypath
     return pyinfo
-    
-def _print_dict(title, dictionary, selected = None):
+
+
+def _print_dict(title, dictionary, selected=None):
     """Print out dictionary `d` with a one line `title`."""
     if selected is None:
         selected = dictionary.keys()
@@ -719,23 +813,28 @@ def _print_dict(title, dictionary, selected = None):
     else:
         print("\t" + "none")
 
+
 def _print_list(files):
     """Print `files` one file per line."""
     for filename in files:
         print(filename)
 
+
 def _fits_info_lines(path):
     """Return the output of fits.info() as a list of line strings"""
     return _captured_fits_info.outputs(path).splitlines()
+
 
 @utils.capture_output
 def _captured_fits_info(path):
     """Return fits info as a string."""
     fits.info(path)
 
+
 def _pp_lines(obj):
     """Pretty print `obj` and return the resulting text as a list of lines."""
     return str(log.PP(obj)).splitlines()
+
 
 if __name__ == "__main__":
     sys.exit(ListScript()())
